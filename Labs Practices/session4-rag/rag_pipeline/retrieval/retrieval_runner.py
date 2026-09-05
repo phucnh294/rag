@@ -13,6 +13,9 @@ from config.env_config import RagConfig
 from retrieval.step1_receive_question import receive_question_martin
 from retrieval.step2_normalize_question import normalize_question_martin
 from retrieval.step3_embed_question import embed_question_martin
+from retrieval.hybrid.fusion import reciprocal_rank_fusion_martin
+from retrieval.hybrid.lexical import lexical_search_martin
+from retrieval.hybrid.query_builder import build_tsquery_text_martin
 from retrieval.step4_similarity_search import similarity_search_martin
 from retrieval.step5_metadata_filter import filter_by_metadata_martin
 from retrieval.step6_reranking import rerank_chunks_martin
@@ -28,6 +31,11 @@ logger = get_logger_martin(__name__)
 # reranker actually has something to reorder, then truncate after rerank.
 _RERANK_CANDIDATE_POOL = 10
 _RERANK_TOP_N = 10
+
+# Per-method candidate pool size before RRF fusion, and the standard IR
+# default for RRF's k (dampens the impact of any single rank position).
+_HYBRID_CANDIDATE_POOL = 20
+_RRF_K = 60
 
 
 def _log_ranking_martin(label: str, chunks: list[Any]) -> None:
@@ -48,6 +56,14 @@ def run_retrieval_martin(
     conn = get_connection_martin(config)
     try:
         candidates = similarity_search_martin(conn, question_embedding, top_k=top_k)
+        if config.hybrid_enabled:
+            tsquery_text = build_tsquery_text_martin(question)
+            lexical_candidates = lexical_search_martin(
+                conn, tsquery_text, top_k=_HYBRID_CANDIDATE_POOL
+            )
+            candidates = reciprocal_rank_fusion_martin(
+                [candidates, lexical_candidates], k=_RRF_K, top_k=top_k
+            )
     finally:
         conn.close()
 
@@ -72,4 +88,5 @@ def run_retrieval_martin(
         before_rerank=filtered,
         excluded_count=len(candidates) - len(filtered),
         restricted_to_current=restricted_to_current,
+        hybrid_applied=config.hybrid_enabled,
     )

@@ -29,6 +29,7 @@ class RagConfig:
     rerank_enabled: bool
     rerank_host: str
     rerank_port: int
+    hybrid_enabled: bool
     chat_provider: str
     llama_host: str
     llama_port: int
@@ -54,6 +55,12 @@ def load_config_martin() -> RagConfig:
     try:
         chat_provider = os.environ.get("CHAT_PROVIDER", "ollama").strip().lower()
         rerank_enabled = os.environ.get("RERANK_ENABLED", "true").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        hybrid_enabled = os.environ.get("HYBRID_SEARCH_ENABLED", "false").strip().lower() in (
             "1",
             "true",
             "yes",
@@ -89,6 +96,7 @@ def load_config_martin() -> RagConfig:
             rerank_enabled=rerank_enabled,
             rerank_host=rerank_host,
             rerank_port=rerank_port,
+            hybrid_enabled=hybrid_enabled,
             chat_provider=chat_provider,
             llama_host=llama_host,
             llama_port=llama_port,

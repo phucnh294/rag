@@ -25,6 +25,7 @@ class ChatRequest(BaseModel):
 
     question: str
     rerank: bool | None = None  # None = use the server's RERANK_ENABLED default
+    hybrid: bool | None = None  # None = use the server's HYBRID_SEARCH_ENABLED default
     include_reference: bool = False  # True = skip the status="current" restriction
 
 
@@ -34,6 +35,8 @@ async def chat_martin(request: ChatRequest) -> dict[str, Any]:
     config = load_config_martin()
     if request.rerank is not None:
         config = replace(config, rerank_enabled=request.rerank)
+    if request.hybrid is not None:
+        config = replace(config, hybrid_enabled=request.hybrid)
     try:
         return run_retrieval_martin(
             config, {"question": request.question}, include_reference=request.include_reference

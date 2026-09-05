@@ -14,11 +14,13 @@ from shared.pgvector_utils import to_vector_literal_martin
 class RetrievedChunk(TypedDict):
     """One retrieved chunk with enough context to build the prompt/answer."""
 
+    chunk_id: str
     content: str
     source_path: str
     score: float
     status: str | None
     area: str | None
+    found_by: str  # "vector" | "lexical" | "both" — which search stage(s) surfaced it
 
 
 def similarity_search_martin(
@@ -29,7 +31,7 @@ def similarity_search_martin(
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT c.content, d.source_path, d.status, d.area,
+            SELECT c.id, c.content, d.source_path, d.status, d.area,
                    (e.embedding <=> %s::vector) AS distance
             FROM rag_embeddings e
             JOIN rag_chunks c ON c.id = e.chunk_id
@@ -43,7 +45,13 @@ def similarity_search_martin(
 
     return [
         RetrievedChunk(
-            content=content, source_path=source_path, status=status, area=area, score=1.0 - distance
+            chunk_id=str(chunk_id),
+            content=content,
+            source_path=source_path,
+            status=status,
+            area=area,
+            score=1.0 - distance,
+            found_by="vector",
         )
-        for content, source_path, status, area, distance in rows
+        for chunk_id, content, source_path, status, area, distance in rows
     ]

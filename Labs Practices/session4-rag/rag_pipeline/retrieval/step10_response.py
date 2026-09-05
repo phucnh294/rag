@@ -11,7 +11,7 @@ from typing import Any
 
 
 def _format_scored_chunks_martin(chunks: list[Any]) -> list[dict[str, Any]]:
-    """Return [{"source_path", "score", "content", "status", "area"}, ...] for debugging."""
+    """Return [{"source_path", "score", "content", "status", "area", "found_by"}, ...]."""
     return [
         {
             "source_path": chunk["source_path"],
@@ -19,6 +19,7 @@ def _format_scored_chunks_martin(chunks: list[Any]) -> list[dict[str, Any]]:
             "content": chunk["content"],
             "status": chunk.get("status"),
             "area": chunk.get("area"),
+            "found_by": chunk.get("found_by", "vector"),
         }
         for chunk in chunks
     ]
@@ -31,6 +32,7 @@ def build_response_martin(
     before_rerank: list[Any],
     excluded_count: int = 0,
     restricted_to_current: bool = False,
+    hybrid_applied: bool = False,
 ) -> dict[str, Any]:
     """Return the {"answer", "sources", "reranked", "retrieval_scores"} dict.
 
@@ -53,6 +55,7 @@ def build_response_martin(
         "answer": answer,
         "sources": sources,
         "reranked": rerank_applied,
+        "hybrid": hybrid_applied,
         "retrieval_scores": {
             "before_rerank": _format_scored_chunks_martin(before_rerank),
             "after_rerank": _format_scored_chunks_martin(chunks) if rerank_applied else None,

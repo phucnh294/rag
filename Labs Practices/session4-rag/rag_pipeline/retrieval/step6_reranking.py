@@ -23,10 +23,12 @@ def rerank_chunks_martin(
     scores = rerank_scores_martin(config, question, [chunk["content"] for chunk in chunks])
     rescored = [
         RetrievedChunk(
+            chunk_id=chunk["chunk_id"],
             content=chunk["content"],
             source_path=chunk["source_path"],
             status=chunk["status"],
             area=chunk["area"],
+            found_by=chunk["found_by"],
             score=score,
         )
         for chunk, score in zip(chunks, scores)
