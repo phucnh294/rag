@@ -10,6 +10,6 @@ from config.env_config import RagConfig
 from config.llm_setup import chat_martin
 
 
-def call_llm_martin(config: RagConfig, prompt: str) -> str:
-    """Return llama3.1's raw answer text for the given prompt."""
+def call_llm_martin(config: RagConfig, prompt: str) -> tuple[str, dict]:
+    """Return (answer, request_payload_sent) for the given prompt."""
     return chat_martin(config, prompt)

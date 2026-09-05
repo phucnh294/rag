@@ -13,8 +13,10 @@ Markdown entry per request, append-only.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 _PROMPT_LOG_DIR = Path(__file__).resolve().parent.parent / "prompt_logs"
 
@@ -26,9 +28,15 @@ def log_prompt_martin(
     full_prompt: str,
     provider: str,
     model: str,
+    raw_request: dict[str, Any],
     answer: str,
 ) -> None:
-    """Append one timestamped record of a full LLM request/response to today's log."""
+    """Append one timestamped record of a full LLM request/response to today's log.
+
+    raw_request is the exact JSON body posted to the provider's API (see
+    config/llm_setup.py) — never includes secrets; the Gemini API key
+    travels as a URL param, not in this body.
+    """
     _PROMPT_LOG_DIR.mkdir(parents=True, exist_ok=True)
     now = datetime.now()
     log_file = _PROMPT_LOG_DIR / f"prompt_log_{now:%Y-%m-%d}.md"
@@ -40,6 +48,8 @@ def log_prompt_martin(
         f"**System prompt (rules):**\n```\n{system_prompt}\n```\n\n"
         f"**Context (retrieved chunks assembled):**\n```\n{context}\n```\n\n"
         f"**Full prompt actually sent to model:**\n```\n{full_prompt}\n```\n\n"
+        f"**Raw request body sent to the model API:**\n```json\n"
+        f"{json.dumps(raw_request, indent=2, ensure_ascii=False)}\n```\n\n"
         f"**Model response (after):**\n```\n{answer}\n```\n\n"
         "---\n\n"
     )

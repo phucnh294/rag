@@ -42,34 +42,34 @@ def rerank_scores_martin(config: RagConfig, query: str, documents: list[str]) ->
     return response.json()["scores"]
 
 
-def _chat_ollama_martin(config: RagConfig, prompt: str) -> str:
-    """Call a local Ollama model's /api/generate."""
+def _chat_ollama_martin(config: RagConfig, prompt: str) -> tuple[str, dict]:
+    """Call a local Ollama model's /api/generate. Return (answer, request_payload_sent)."""
     url = f"http://{config.llama_host}:{config.llama_port}/api/generate"
-    response = requests.post(
-        url,
-        json={"model": config.llama_model, "prompt": prompt, "stream": False},
-        timeout=600,
-    )
+    payload = {"model": config.llama_model, "prompt": prompt, "stream": False}
+    response = requests.post(url, json=payload, timeout=600)
     response.raise_for_status()
-    return response.json()["response"]
+    return response.json()["response"], payload
 
 
-def _chat_gemini_martin(config: RagConfig, prompt: str) -> str:
-    """Call Google AI Studio's Gemini API, retrying on transient errors/timeouts."""
+def _chat_gemini_martin(config: RagConfig, prompt: str) -> tuple[str, dict]:
+    """Call Google AI Studio's Gemini API, retrying on transient errors/timeouts.
+
+    Returns (answer, request_payload_sent). The API key travels as a URL
+    query param, not in the JSON body, so the returned payload never
+    contains it.
+    """
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
         f"{config.gemini_model}:generateContent"
     )
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
     last_timeout: requests.exceptions.Timeout | None = None
     for attempt in range(_MAX_ATTEMPTS):
         is_last_attempt = attempt == _MAX_ATTEMPTS - 1
 
         try:
             response = requests.post(
-                url,
-                params={"key": config.gemini_api_key},
-                json={"contents": [{"parts": [{"text": prompt}]}]},
-                timeout=60,
+                url, params={"key": config.gemini_api_key}, json=payload, timeout=60
             )
         except requests.exceptions.Timeout as err:
             last_timeout = err
@@ -84,25 +84,28 @@ def _chat_gemini_martin(config: RagConfig, prompt: str) -> str:
 
         response.raise_for_status()
         data = response.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        return data["candidates"][0]["content"]["parts"][0]["text"], payload
 
     assert last_timeout is not None  # loop always returns/raises above otherwise
     raise last_timeout
 
 
-# Add a new provider by writing a _chat_<name>_martin(config, prompt) -> str
+# Add a new provider by writing a _chat_<name>_martin(config, prompt) -> (str, dict)
 # function above and registering it here under CHAT_PROVIDER's value.
-_CHAT_BACKENDS: dict[str, Callable[[RagConfig, str], str]] = {
+_CHAT_BACKENDS: dict[str, Callable[[RagConfig, str], tuple[str, dict]]] = {
     "ollama": _chat_ollama_martin,
     "gemini": _chat_gemini_martin,
 }
 
 
-def chat_martin(config: RagConfig, prompt: str) -> str:
-    """Return the configured chat model's response for a fully-built prompt.
+def chat_martin(config: RagConfig, prompt: str) -> tuple[str, dict]:
+    """Return (answer, request_payload_sent) for the configured chat model.
 
     Dispatches to the backend named by config.chat_provider (CHAT_PROVIDER
-    env var) — currently "ollama" or "gemini".
+    env var) — currently "ollama" or "gemini". request_payload_sent is the
+    exact JSON body posted to the provider's API (never includes secrets —
+    the Gemini API key travels as a URL param, not in this body), returned
+    so callers can audit-log precisely what was sent.
     """
     try:
         backend = _CHAT_BACKENDS[config.chat_provider]

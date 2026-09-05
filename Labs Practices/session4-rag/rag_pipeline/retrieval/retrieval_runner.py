@@ -80,7 +80,7 @@ def run_retrieval_martin(
 
     context = assemble_context_martin(reranked)
     prompt = build_prompt_martin(context, question)
-    answer = call_llm_martin(config, prompt)
+    answer, raw_request = call_llm_martin(config, prompt)
     model_name = config.llama_model if config.chat_provider == "ollama" else config.gemini_model
     log_prompt_martin(
         question=question,
@@ -89,6 +89,7 @@ def run_retrieval_martin(
         full_prompt=prompt,
         provider=config.chat_provider,
         model=model_name,
+        raw_request=raw_request,
         answer=answer,
     )
 
