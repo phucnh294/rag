@@ -1,0 +1,58 @@
+{
+  "info": {
+    "name": "Ollama API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Generate",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model\": \"{{model}}\",\n  \"prompt\": \"{{prompt}}\",\n  \"stream\": false,\n  \"options\": { \"temperature\": 0.2, \"top_k\": 20, \"top_p\": 0.5 }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/generate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "generate"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "let jsonData = pm.response.json();",
+              "",
+              "pm.test(\"response field is a non-empty string\", function () {",
+              "    pm.expect(jsonData.response).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test(\"done is true\", function () {",
+              "    pm.expect(jsonData.done).to.eql(true);",
+              "});",
+              "",
+              "pm.test(\"model matches request\", function () {",
+              "    pm.expect(jsonData.model).to.eql(pm.variables.get('model'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:11434" },
+    { "key": "model", "value": "gemma:2b" },
+    { "key": "prompt", "value": "Viết hàm tính giai thừa bằng Python" }
+  ]
+}

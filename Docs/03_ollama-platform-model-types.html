@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ollama Platform & Các loại Model — Dense, MoE, Multimodal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+:root{
+  --bg:#070a12; --surface:#0d1220; --card:#131a2b; --border:#1e2740;
+  --accent:#4f8ef7; --gold:#f0b429; --green:#2dd4a0; --purple:#a78bfa;
+  --cyan:#22d3ee; --red:#f87171; --orange:#fb923c; --pink:#f472b6;
+  --text:#e2e8f5; --muted:#5f6b8a; --dim:#2a3454;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;font-size:15px}
+.wrap{max-width:920px;margin:0 auto;padding:48px 22px 100px}
+
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.1;margin-bottom:16px;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700;margin:56px 0 8px;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:600;margin:26px 0 10px}
+p{color:#9aa8c4;margin-bottom:14px}
+strong{color:var(--text)}
+code{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:.9em}
+.lead{font-size:1.12rem;color:#8496b8;line-height:1.75;margin-bottom:8px}
+.hr{border:none;border-top:1px solid var(--border);margin:20px 0 0}
+
+.callout{border-left:3px solid var(--accent);background:rgba(79,142,247,.06);border-radius:0 10px 10px 0;padding:16px 20px;margin:22px 0;font-size:14px;color:#8fadd4}
+.callout.gold{border-color:var(--gold);background:rgba(240,180,41,.06);color:#c9ad6a}
+.callout.green{border-color:var(--green);background:rgba(45,212,160,.06);color:#65c9a8}
+.callout.purple{border-color:var(--purple);background:rgba(167,139,250,.06);color:#b0a0e0}
+.callout strong{color:var(--text)}
+
+/* ── PLATFORM DIAGRAM ── */
+.platform{background:linear-gradient(160deg,#111830,#0c1120);border:1px solid var(--border);border-radius:20px;padding:28px;margin:26px 0}
+.platform-title{text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:20px;text-transform:uppercase;letter-spacing:.1em}
+.ollama-core{background:var(--gold);color:#0c1120;text-align:center;padding:16px;border-radius:14px;font-weight:800;font-size:1.15rem;margin:0 auto 4px;max-width:340px;box-shadow:0 8px 30px rgba(240,180,41,.25)}
+.ollama-sub{text-align:center;font-size:12px;color:var(--muted);margin-bottom:22px}
+.pull-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:640px){.pull-grid{grid-template-columns:repeat(2,1fr)}}
+.pull-chip{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 10px;text-align:center;transition:transform .15s,border-color .15s}
+.pull-chip:hover{transform:translateY(-3px);border-color:var(--accent)}
+.pull-icon{font-size:1.5rem;margin-bottom:5px}
+.pull-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);font-weight:600}
+.pull-type{font-size:10px;color:var(--muted);margin-top:2px}
+.arrows-down{text-align:center;color:var(--muted);font-size:1.4rem;margin:14px 0}
+
+/* analogy */
+.analogy{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+@media(max-width:560px){.analogy{grid-template-columns:1fr}}
+.ana-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.ana-card h4{font-size:.95rem;margin-bottom:8px;color:var(--text);display:flex;align-items:center;gap:8px}
+.ana-card p{font-size:13px;margin:0}
+
+/* ── MODEL TYPE TABS ── */
+.type-tabs{display:flex;gap:8px;margin:24px 0 0;flex-wrap:wrap}
+.type-tab{flex:1;min-width:130px;padding:14px;border:1.5px solid var(--border);background:var(--surface);border-radius:12px 12px 0 0;cursor:pointer;transition:all .18s;text-align:center}
+.type-tab:hover{border-color:var(--accent)}
+.type-tab.active{background:var(--card);border-color:var(--border);border-bottom-color:var(--card)}
+.type-tab .tt-name{font-weight:700;font-size:.95rem}
+.type-tab .tt-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.type-tab.active .tt-name{color:var(--gold)}
+.type-panel{display:none;background:var(--card);border:1px solid var(--border);border-radius:0 0 16px 16px;border-top:none;padding:26px}
+.type-panel.active{display:block}
+
+/* dense/moe visual */
+.brain-viz{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin:18px 0}
+.experts-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.expert{width:88px;padding:14px 8px;border-radius:12px;text-align:center;border:1.5px solid var(--border);background:#0c1120;transition:all .3s;opacity:.35}
+.expert.on{opacity:1;border-color:var(--gold);box-shadow:0 6px 20px rgba(240,180,41,.2);transform:translateY(-4px)}
+.expert-icon{font-size:1.5rem;margin-bottom:4px}
+.expert-name{font-size:11px;color:var(--text);font-weight:600}
+.query-box{background:#0c1120;border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;font-size:13px;margin-bottom:8px}
+.query-box b{color:var(--cyan)}
+.route-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.route-btn{padding:7px 14px;border:1px solid var(--border);background:var(--surface);border-radius:8px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s}
+.route-btn:hover{border-color:var(--gold);color:var(--text)}
+
+/* multimodal visual */
+.mm-flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin:18px 0}
+.mm-in{display:flex;flex-direction:column;gap:8px}
+.mm-chip{background:#0c1120;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:8px}
+.mm-model{background:var(--purple);color:#0c1120;padding:18px 22px;border-radius:14px;font-weight:800;text-align:center;font-size:.95rem;box-shadow:0 8px 24px rgba(167,139,250,.25)}
+.mm-arrow{color:var(--muted);font-size:1.4rem}
+
+/* pros cons */
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+@media(max-width:560px){.pc{grid-template-columns:1fr}}
+.pc-box{border-radius:12px;padding:16px 18px;font-size:13px}
+.pc-pro{background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.25)}
+.pc-con{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2)}
+.pc-box h4{font-size:.9rem;margin-bottom:8px}
+.pc-box ul{margin:0;padding-left:18px;color:var(--muted)}
+.pc-box li{margin-bottom:5px}
+
+/* table */
+.tk{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px}
+.tk th{background:var(--surface);padding:12px;text-align:left;color:var(--text);border-bottom:2px solid var(--border);font-size:12px}
+.tk td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.tk tr:hover td{background:rgba(79,142,247,.03)}
+.tk code{font-size:11px}
+
+/* ── OLLAMA CMD ── */
+.terminal{background:#05070c;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0;font-family:'JetBrains Mono',monospace}
+.terminal-bar{background:#0d1119;padding:8px 14px;display:flex;gap:6px;align-items:center;border-bottom:1px solid var(--border)}
+.tdot{width:11px;height:11px;border-radius:50%}
+.tdot.r{background:#ff5f56}.tdot.y{background:#ffbd2e}.tdot.g{background:#27c93f}
+.terminal-title{font-size:11px;color:var(--muted);margin-left:8px}
+.terminal-body{padding:16px;font-size:13px;line-height:1.7}
+.t-cmd{color:var(--green)}.t-out{color:var(--muted)}.t-hi{color:var(--cyan)}.t-prompt{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">// Module 02 · Deep Dive</div>
+  <h1>Ollama là một Platform<br>và các loại Model</h1>
+  <p class="lead">Hai điều dễ nhầm: (1) Ollama <strong>không phải một model</strong> — nó là nền tảng để chạy <em>bất kỳ</em> model nào. (2) Không phải model nào cũng giống nhau — có Dense, MoE, và Multimodal, mỗi loại một kiến trúc khác nhau.</p>
+  <hr class="hr">
+
+  <!-- ══ PART 1: OLLAMA PLATFORM ══ -->
+  <h2>Ollama — Nền tảng chạy model, không phải model</h2>
+  <p>Nhiều người tưởng "Ollama" là tên một AI. Sai. Ollama giống như một <strong>đầu máy đọc đĩa</strong> — bản thân nó không phát nhạc, nhưng bỏ đĩa nào vào cũng phát được. Model chính là những "chiếc đĩa" bạn nạp vào.</p>
+
+  <div class="platform">
+    <div class="platform-title">// Bạn "pull" bất kỳ model nào từ thư viện</div>
+    <div class="pull-grid">
+      <div class="pull-chip"><div class="pull-icon">🦙</div><div class="pull-name">llama3.1</div><div class="pull-type">Dense · text</div></div>
+      <div class="pull-chip"><div class="pull-icon">💻</div><div class="pull-name">qwen2.5-coder</div><div class="pull-type">Dense · code</div></div>
+      <div class="pull-chip"><div class="pull-icon">🧩</div><div class="pull-name">mixtral</div><div class="pull-type">MoE</div></div>
+      <div class="pull-chip"><div class="pull-icon">👁️</div><div class="pull-name">llama3.2-vision</div><div class="pull-type">Multimodal</div></div>
+      <div class="pull-chip"><div class="pull-icon">🔢</div><div class="pull-name">nomic-embed</div><div class="pull-type">Embedding</div></div>
+      <div class="pull-chip"><div class="pull-icon">🇻🇳</div><div class="pull-name">qwen2.5</div><div class="pull-type">Dense · đa ngôn ngữ</div></div>
+      <div class="pull-chip"><div class="pull-icon">🧠</div><div class="pull-name">qwq</div><div class="pull-type">Reasoning</div></div>
+      <div class="pull-chip"><div class="pull-icon">⚡</div><div class="pull-name">phi3</div><div class="pull-type">Dense · nhỏ</div></div>
+    </div>
+    <div class="arrows-down">↓ ↓ ↓</div>
+    <div class="ollama-core">⚙️ OLLAMA ENGINE</div>
+    <div class="ollama-sub">Một nền tảng — nạp và chạy được TẤT CẢ các model trên</div>
+    <div class="arrows-down">↓</div>
+    <div style="text-align:center;font-size:13px;color:var(--muted)">API thống nhất ở <code>localhost:11434</code> — app của bạn gọi cùng một cách, dù model nào</div>
+  </div>
+
+  <div class="analogy">
+    <div class="ana-card">
+      <h4>💿 Ollama = đầu đĩa</h4>
+      <p>Platform lo phần khó: nạp model vào RAM/GPU, chạy tính toán, expose API. Bạn không cần biết chi tiết bên trong.</p>
+    </div>
+    <div class="ana-card">
+      <h4>📀 Model = chiếc đĩa</h4>
+      <p>Bạn pull đĩa nào cũng được: Llama, Qwen, Mistral, vision model... Đổi model chỉ là đổi tên trong lệnh.</p>
+    </div>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar"><div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div><span class="terminal-title">cùng một platform, khác model</span></div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama pull llama3.1:8b</span><span class="t-out">        # model text thường</span><br>
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama pull mixtral:8x7b</span><span class="t-out">       # model MoE</span><br>
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama pull llama3.2-vision:11b</span><span class="t-out"> # model multimodal</span><br>
+      <span class="t-out"># Ollama chạy được cả 3 — cùng một cách gọi API</span>
+    </div>
+  </div>
+
+  <div class="callout gold">
+    <strong>Vì sao điều này quan trọng?</strong> Vì code app của bạn viết một lần, đổi model thoải mái. Hôm nay dùng llama3.1:8b, mai thấy qwen giỏi hơn thì đổi tên model — không phải viết lại gì. Platform tách rời <em>ứng dụng</em> khỏi <em>model</em>. Có các platform khác cùng vai trò: vLLM, LM Studio, llama.cpp — Ollama dễ dùng nhất cho dev.
+  </div>
+
+  <!-- ══ PART 2: MODEL TYPES ══ -->
+  <h2>Ba loại kiến trúc model</h2>
+  <p>Model không chỉ khác nhau về size. Chúng khác cả về <strong>cách bên trong hoạt động</strong>. Bấm từng tab để hiểu:</p>
+
+  <div class="type-tabs">
+    <div class="type-tab active" onclick="showType('dense',this)">
+      <div class="tt-name">🧠 Dense</div><div class="tt-sub">Model thường</div>
+    </div>
+    <div class="type-tab" onclick="showType('moe',this)">
+      <div class="tt-name">🧩 MoE</div><div class="tt-sub">Nhiều chuyên gia</div>
+    </div>
+    <div class="type-tab" onclick="showType('mm',this)">
+      <div class="tt-name">👁️ Multimodal</div><div class="tt-sub">Ảnh + chữ</div>
+    </div>
+  </div>
+
+  <!-- DENSE -->
+  <div class="type-panel active" id="p-dense">
+    <h3>Dense Model — "Model thường"</h3>
+    <p>Đây là loại phổ biến nhất (Llama, Qwen, Mistral 7B). "Dense" nghĩa là <strong>mỗi lần trả lời, TOÀN BỘ parameters đều được kích hoạt</strong>. Cả bộ não làm việc cho mọi câu hỏi, dù dễ hay khó.</p>
+
+    <div class="brain-viz">
+      <div class="query-box">Câu hỏi bất kỳ → <b>toàn bộ 8 tỉ params đều hoạt động</b></div>
+      <div class="experts-row">
+        <div class="expert on"><div class="expert-icon">🧠</div><div class="expert-name">Cả model</div></div>
+      </div>
+      <p style="text-align:center;font-size:12px;color:var(--muted);margin:0">Không chia phần — mọi neuron cùng tính cho mọi request</p>
+    </div>
+
+    <div class="pc">
+      <div class="pc-box pc-pro">
+        <h4 style="color:var(--green)">✓ Ưu điểm</h4>
+        <ul><li>Đơn giản, ổn định, dễ hiểu</li><li>Chạy tốt trên phần cứng thường</li><li>Đủ dùng cho hầu hết task</li></ul>
+      </div>
+      <div class="pc-box pc-con">
+        <h4 style="color:var(--red)">✗ Nhược điểm</h4>
+        <ul><li>Câu dễ cũng "huy động" cả model → tốn tính toán</li><li>Muốn giỏi hơn phải tăng toàn bộ size</li></ul>
+      </div>
+    </div>
+    <p style="font-size:13px"><strong>Ví dụ:</strong> <code>llama3.1:8b</code>, <code>qwen2.5-coder:14b</code>, <code>mistral:7b</code> — tất cả model bạn dùng trong lab đều là Dense.</p>
+  </div>
+
+  <!-- MoE -->
+  <div class="type-panel" id="p-moe">
+    <h3>MoE — Mixture of Experts (Hỗn hợp chuyên gia)</h3>
+    <p>MoE chia model thành nhiều <strong>"chuyên gia" (expert)</strong> con. Với mỗi câu hỏi, một <em>router</em> chỉ chọn vài chuyên gia phù hợp để trả lời — <strong>không kích hoạt toàn bộ</strong>. Giống một bệnh viện: bạn đau răng thì gặp nha sĩ, không phải cả bệnh viện khám bạn.</p>
+
+    <div class="brain-viz">
+      <div class="query-box" id="moeQuery">Bấm nút dưới để gửi câu hỏi tới router →</div>
+      <div class="experts-row" id="moeExperts">
+        <div class="expert" data-e="law"><div class="expert-icon">⚖️</div><div class="expert-name">Pháp lý</div></div>
+        <div class="expert" data-e="med"><div class="expert-icon">🏥</div><div class="expert-name">Y tế</div></div>
+        <div class="expert" data-e="code"><div class="expert-icon">💻</div><div class="expert-name">Lập trình</div></div>
+        <div class="expert" data-e="math"><div class="expert-icon">🔢</div><div class="expert-name">Toán</div></div>
+        <div class="expert" data-e="lang"><div class="expert-icon">🌐</div><div class="expert-name">Ngôn ngữ</div></div>
+      </div>
+      <div class="route-btns">
+        <div class="route-btn" onclick="routeMoe('law','Hợp đồng này có điều khoản nào rủi ro?')">Hỏi luật</div>
+        <div class="route-btn" onclick="routeMoe('med','Triệu chứng sốt cao kéo dài là gì?')">Hỏi y tế</div>
+        <div class="route-btn" onclick="routeMoe('code','Viết hàm sort trong Python')">Hỏi code</div>
+        <div class="route-btn" onclick="routeMoe('math','Giải phương trình bậc 2')">Hỏi toán</div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <strong>Điểm mấu chốt:</strong> Một model MoE như <code>mixtral:8x7b</code> có "8×7B" — tổng cộng ~47 tỉ params, nhưng mỗi câu hỏi chỉ dùng ~13B (2 expert). Nên nó <strong>thông minh như model lớn nhưng chạy nhanh gần như model nhỏ</strong>. Đó là điều làm MoE hấp dẫn.
+    </div>
+
+    <div class="pc">
+      <div class="pc-box pc-pro">
+        <h4 style="color:var(--green)">✓ Ưu điểm</h4>
+        <ul><li>Thông minh cao mà tốc độ nhanh</li><li>Mỗi expert chuyên sâu một lĩnh vực</li><li>Hiệu quả tính toán hơn Dense cùng độ giỏi</li></ul>
+      </div>
+      <div class="pc-box pc-con">
+        <h4 style="color:var(--red)">✗ Nhược điểm</h4>
+        <ul><li>Tốn RAM: phải nạp TẤT CẢ expert vào bộ nhớ (dù mỗi lần chỉ dùng vài cái)</li><li>Phức tạp hơn, khó fine-tune</li></ul>
+      </div>
+    </div>
+    <p style="font-size:13px"><strong>Ví dụ:</strong> <code>mixtral:8x7b</code>, <code>mixtral:8x22b</code>, và nhiều model lớn hiện đại (GPT-4, DeepSeek) đều dùng kiến trúc MoE bên trong.</p>
+  </div>
+
+  <!-- MULTIMODAL -->
+  <div class="type-panel" id="p-mm">
+    <h3>Multimodal — Một model, nhiều "giác quan"</h3>
+    <p>Model thường chỉ hiểu <strong>chữ</strong>. Model multimodal hiểu được nhiều loại dữ liệu cùng lúc — phổ biến nhất là <strong>ảnh + chữ</strong>. Bạn đưa cho nó một tấm ảnh và hỏi bằng chữ, nó "nhìn" và trả lời.</p>
+
+    <div class="brain-viz">
+      <div class="mm-flow">
+        <div class="mm-in">
+          <div class="mm-chip">🖼️ Ảnh hóa đơn</div>
+          <div class="mm-chip">💬 "Tổng tiền là bao nhiêu?"</div>
+        </div>
+        <div class="mm-arrow">→</div>
+        <div class="mm-model">👁️ Vision<br>Model</div>
+        <div class="mm-arrow">→</div>
+        <div class="mm-chip">✅ "Tổng: 1.250.000đ"</div>
+      </div>
+      <p style="text-align:center;font-size:12px;color:var(--muted);margin:0">Model "đọc" ảnh và chữ trong cùng một luồng suy nghĩ</p>
+    </div>
+
+    <h3>Ứng dụng thực tế</h3>
+    <div class="analogy">
+      <div class="ana-card"><h4>📄 Đọc tài liệu scan</h4><p>Trích xuất dữ liệu từ ảnh hóa đơn, form, CMND — cực hợp cho pipeline extraction của bạn.</p></div>
+      <div class="ana-card"><h4>🖼️ Mô tả / phân tích ảnh</h4><p>Hỏi "trong ảnh có gì", đọc biểu đồ, hiểu screenshot giao diện.</p></div>
+    </div>
+
+    <div class="pc">
+      <div class="pc-box pc-pro">
+        <h4 style="color:var(--green)">✓ Ưu điểm</h4>
+        <ul><li>Xử lý được ảnh — mở ra cả loạt use case mới</li><li>Không cần OCR riêng, model "nhìn" trực tiếp</li></ul>
+      </div>
+      <div class="pc-box pc-con">
+        <h4 style="color:var(--red)">✗ Nhược điểm</h4>
+        <ul><li>Nặng hơn model text cùng size</li><li>Phần "vision" thường yếu hơn model chuyên OCR</li></ul>
+      </div>
+    </div>
+    <p style="font-size:13px"><strong>Ví dụ:</strong> <code>llama3.2-vision:11b</code>, <code>qwen2.5vl:7b</code>, <code>qwen3-vl:8b</code> — trong danh sách model của bạn có sẵn mấy cái này rồi.</p>
+  </div>
+
+  <!-- SUMMARY TABLE -->
+  <h2>Bảng so sánh nhanh</h2>
+  <table class="tk">
+    <thead>
+      <tr><th>Loại</th><th>Cách hoạt động</th><th>Điểm mạnh</th><th>Ví dụ (Ollama)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong style="color:var(--cyan)">🧠 Dense</strong></td>
+        <td>Toàn bộ params hoạt động mỗi request</td>
+        <td>Đơn giản, ổn định, phổ biến nhất</td>
+        <td><code>llama3.1:8b</code></td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--gold)">🧩 MoE</strong></td>
+        <td>Router chọn vài "expert" phù hợp</td>
+        <td>Thông minh cao + nhanh, tốn RAM</td>
+        <td><code>mixtral:8x7b</code></td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--purple)">👁️ Multimodal</strong></td>
+        <td>Hiểu cả ảnh lẫn chữ</td>
+        <td>Xử lý được ảnh, tài liệu scan</td>
+        <td><code>llama3.2-vision:11b</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout green">
+    <strong>Tổng kết cho AI Engineer:</strong> Ollama là platform — bạn chọn model theo nhu cầu. Task text thường → Dense (nhẹ, đủ dùng). Cần vừa thông minh vừa nhanh → cân nhắc MoE (nếu đủ RAM). Cần xử lý ảnh/tài liệu scan → Multimodal. Và vì Ollama gọi cùng một API, bạn có thể trộn nhiều loại trong cùng một hệ thống.
+  </div>
+
+</div>
+
+<script>
+function showType(id, el){
+  document.querySelectorAll('.type-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+}
+function routeMoe(expert, q){
+  document.getElementById('moeQuery').innerHTML = '<b>"'+q+'"</b> → router chọn expert phù hợp';
+  const map={law:'law',med:'med',code:'code',math:'math'};
+  document.querySelectorAll('#moeExperts .expert').forEach(e=>{
+    e.classList.toggle('on', e.dataset.e===map[expert]);
+  });
+}
+</script>
+</body>
+</html>

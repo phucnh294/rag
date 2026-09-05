@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 1 — AI Foundation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #07090f;
+  --surface: #0e1118;
+  --card: #131720;
+  --border: #1c2236;
+  --accent: #4f8ef7;
+  --gold: #f0b429;
+  --green: #2dd4a0;
+  --red: #f87171;
+  --purple: #a78bfa;
+  --text: #dde3f0;
+  --muted: #5a6580;
+  --dim: #2a3350;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7,9,15,.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0 24px;
+}
+.nav-btn {
+  padding: 14px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .2s, border-color .2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── SECTIONS ── */
+.section { display: none; max-width: 900px; margin: 0 auto; padding: 56px 24px 100px; }
+.section.active { display: block; }
+
+/* ── TYPOGRAPHY ── */
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  margin-top: 36px;
+}
+p { color: #a0aec0; margin-bottom: 16px; }
+strong { color: var(--text); }
+
+.lead {
+  font-size: 1.1rem;
+  color: #8899bb;
+  line-height: 1.75;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 28px; margin: 32px 0; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--dim), var(--accent), var(--gold));
+}
+.tl-item { position: relative; margin-bottom: 36px; }
+.tl-dot {
+  position: absolute;
+  left: -25px;
+  top: 4px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--bg);
+}
+.tl-dot.gold { border-color: var(--gold); }
+.tl-dot.green { border-color: var(--green); }
+.tl-year {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.tl-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.tl-desc { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+.tl-badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(79,142,247,.12);
+  color: var(--accent);
+  border: 1px solid rgba(79,142,247,.2);
+}
+.tl-badge.gold { background: rgba(240,180,41,.1); color: var(--gold); border-color: rgba(240,180,41,.2); }
+
+/* ── CALLOUT ── */
+.callout {
+  border-left: 3px solid var(--accent);
+  background: rgba(79,142,247,.06);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-size: 14px;
+  color: #8fadd4;
+}
+.callout.gold { border-color: var(--gold); background: rgba(240,180,41,.06); color: #bfa060; }
+.callout.green { border-color: var(--green); background: rgba(45,212,160,.06); color: #60c9a8; }
+.callout strong { color: var(--text); }
+
+/* ── GRID CARDS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.card-icon { font-size: 1.6rem; margin-bottom: 10px; }
+.card-title { font-weight: 600; font-size: .9rem; margin-bottom: 6px; color: var(--text); }
+.card-desc { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+
+/* ── ATTENTION VIZ ── */
+.sentence-demo {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin: 28px 0;
+}
+.sentence-demo p.label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+.word-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+.word {
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+  border: 1px solid transparent;
+  color: var(--muted);
+  background: var(--surface);
+}
+.word.focus { color: var(--text); border-color: var(--gold); background: rgba(240,180,41,.08); font-weight: 700; }
+.word.hi-5 { color: var(--text); background: rgba(79,142,247,.25); border-color: rgba(79,142,247,.4); }
+.word.hi-4 { color: var(--text); background: rgba(79,142,247,.18); border-color: rgba(79,142,247,.25); }
+.word.hi-3 { background: rgba(79,142,247,.1); border-color: rgba(79,142,247,.15); color: #7a9fc8; }
+.word.hi-2 { background: rgba(79,142,247,.05); color: var(--muted); }
+.word.hi-1 { opacity: .4; }
+.demo-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.attention-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+  display: none;
+}
+.attention-label.show { display: block; }
+.attention-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  align-items: flex-end;
+}
+.abar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.abar-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.abar {
+  width: 100%;
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  background: var(--accent);
+  opacity: .3;
+  transition: height .3s, opacity .3s, background .3s;
+}
+.abar-word {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.abar-col.is-query .abar-word { color: var(--gold); font-weight: 700; }
+.attn-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.attn-legend div { display: flex; align-items: center; gap: 7px; }
+.attn-legend i {
+  width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; display: inline-block;
+}
+
+/* ── VECTOR VIZ ── */
+.vector-demo {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.vec-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+}
+.vec-word {
+  font-weight: 600;
+  color: var(--text);
+  width: 80px;
+  flex-shrink: 0;
+}
+.vec-bar-wrap { flex: 1; display: flex; gap: 3px; height: 22px; }
+.vec-segment {
+  flex: 1;
+  border-radius: 3px;
+  background: var(--dim);
+  position: relative;
+  overflow: hidden;
+}
+.vec-fill {
+  position: absolute;
+  left: 0; top: 0; height: 100%;
+  border-radius: 3px;
+  transition: width .6s;
+}
+.vec-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  width: 150px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+.vec-head { margin-bottom: 6px; align-items: flex-end; }
+.vec-head .vec-bar-wrap { height: auto; }
+.vec-dim {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  text-align: center;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.vec-dim span { display: block; color: var(--muted); font-size: 8.5px; }
+
+/* ── VECTOR ARITHMETIC ── */
+.math-demo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin: 24px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  overflow-x: auto;
+}
+.math-row { display: flex; gap: 6px; align-items: center; padding: 4px 0; min-width: 470px; }
+.math-op { width: 92px; flex-shrink: 0; color: var(--text); }
+.math-cell { flex: 1; text-align: center; color: var(--muted); }
+.math-row.head .math-cell { font-size: 9px; letter-spacing: .04em; }
+.math-row.head .math-cell b { font-weight: 500; }
+.math-row.sep { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 10px; }
+.math-row.result .math-op, .math-row.result .math-cell { color: var(--gold); font-weight: 700; }
+.math-row.target .math-op, .math-row.target .math-cell { color: var(--green); font-weight: 700; }
+.math-cell.changed { color: var(--purple); font-weight: 700; }
+.math-tail { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.6; }
+
+/* ── TOKEN VIZ ── */
+.token-demo {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.token-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  margin-bottom: 16px;
+  outline: none;
+  resize: none;
+}
+.token-input:focus { border-color: var(--accent); }
+.token-output { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; }
+.tok {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid;
+}
+.tok-colors { --colors: #4f8ef7,#a78bfa,#2dd4a0,#f0b429,#f87171; }
+.token-count {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.token-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.tfact {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.tfact strong { display: block; color: var(--text); font-size: 1rem; margin-bottom: 2px; }
+
+/* ── TOOL CARDS ── */
+.tool-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.tool-icon {
+  font-size: 2rem;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.tool-info { flex: 1; }
+.tool-name { font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 4px; }
+.tool-role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.tool-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.tool-tips { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+/* ── NEXT-WORD VIZ ── */
+.nextword-demo {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.nw-prompt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+}
+.nw-candidates { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.nw-cand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .2s;
+}
+.nw-cand:hover { border-color: var(--accent); }
+.nw-cand.picked { border-color: var(--green); background: rgba(45,212,160,.08); }
+.nw-word { font-weight: 600; font-size: .9rem; color: var(--text); }
+.nw-prob {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.nw-bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .tool-card { flex-direction: column; }
+  .token-facts { grid-template-columns: 1fr; }
+  .vec-label { display: none; }
+  .vec-word { width: 60px; font-size: 12px; }
+  .vec-dim { font-size: 8px; }
+  .vec-dim span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="show('history')">① Lịch sử AI</button>
+  <button class="nav-btn" onclick="show('attention')">② Attention Algorithm</button>
+  <button class="nav-btn" onclick="show('vectors')">③ Vectors & Next Word</button>
+  <button class="nav-btn" onclick="show('tokens')">④ Tokens</button>
+  <button class="nav-btn" onclick="show('tools')">⑤ Code Assist Tools</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 1: HISTORY -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section active" id="s-history">
+  <div class="eyebrow">Module 01 · Phase 1</div>
+  <h2>Tại sao AI đột ngột<br>trở nên giỏi như vậy?</h2>
+  <p class="lead">
+    AI không phải mới. Nó tồn tại từ thập niên 1950. Nhưng có <strong>một thuật toán xuất hiện năm 2017</strong> đã thay đổi mọi thứ — không phải vì AI thông minh hơn, mà vì lần đầu tiên máy tính thực sự <em>hiểu được ngữ cảnh</em> của ngôn ngữ.
+  </p>
+
+  <h3>Hành trình trước 2017 — Tại sao AI cũ thất bại?</h3>
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1950s – 1980s</div>
+      <div class="tl-title">Rule-based AI (AI dựa trên luật)</div>
+      <div class="tl-desc">Lập trình viên viết tay hàng ngàn luật: "Nếu thấy từ 'không' trước 'tốt' thì nghĩa là tiêu cực." Không mở rộng được. Không hiểu ngoại lệ.</div>
+      <span class="tl-badge">Brittle — Gãy ngay khi gặp trường hợp lạ</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1990s – 2000s</div>
+      <div class="tl-title">Statistical NLP (Xử lý ngôn ngữ thống kê)</div>
+      <div class="tl-desc">Đếm tần suất từ xuất hiện cùng nhau. "bank" hay xuất hiện với "money" nên có nghĩa là ngân hàng — nhưng khi đứng cạnh "river" thì sao? Model không phân biệt được.</div>
+      <span class="tl-badge">Context-blind — Không biết ngữ cảnh</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2013</div>
+      <div class="tl-title">Word2Vec — Vectors xuất hiện</div>
+      <div class="tl-desc">Google phát minh cách biến từ thành vector số. "King - Man + Woman = Queen" — lần đầu tiên AI hiểu <em>quan hệ</em> giữa từ. Bước đột phá lớn, nhưng vẫn mù ngữ cảnh.</div>
+      <span class="tl-badge">Static — Mỗi từ chỉ có 1 vector cố định</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2014 – 2016</div>
+      <div class="tl-title">RNN & LSTM — Xử lý tuần tự</div>
+      <div class="tl-desc">Mạng đọc từng chữ một như con người, nhớ ngữ cảnh phía trước. Nhưng với câu dài 100 từ, nó "quên" những gì ở đầu câu. Và không thể song song hóa — chậm kinh khủng.</div>
+      <span class="tl-badge">Sequential — Chỉ đọc được 1 chiều, chậm</span>
+    </div>
+
+  </div>
+
+  <div class="callout gold">
+    <strong>Vấn đề cốt lõi:</strong> Không có thuật toán nào trước 2017 có thể đồng thời (1) hiểu ngữ cảnh dài, (2) xử lý song song toàn bộ câu, và (3) học từ dữ liệu khổng lồ. Ba điều này phải xảy ra cùng nhau.
+  </div>
+
+  <h3>2017 — "Attention Is All You Need"</h3>
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-dot gold"></div>
+      <div class="tl-year">June 2017 · Google Brain & Google Research</div>
+      <div class="tl-title">Transformer Architecture ra đời</div>
+      <div class="tl-desc">Vaswani et al. — 8 researchers từ Google Brain và Google Research — công bố "Attention Is All You Need". Bỏ hoàn toàn recurrence và convolution, thay bằng self-attention thuần túy. Mọi từ nhìn vào mọi từ khác <em>cùng lúc và song song</em> — lần đầu tiên có thể train trên GPU ở quy mô lớn.</div>
+      <span class="tl-badge gold">⚡ The inflection point</span>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot green"></div>
+      <div class="tl-year">2018</div>
+      <div class="tl-title">BERT & GPT-1 — Transformer đầu tiên ứng dụng thực tế</div>
+      <div class="tl-desc">Google ra BERT, OpenAI ra GPT-1. Lần đầu tiên pre-training trên dữ liệu lớn, sau đó fine-tune cho nhiệm vụ cụ thể. Benchmark NLP bị phá vỡ liên tục.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot green"></div>
+      <div class="tl-year">2020 – 2023</div>
+      <div class="tl-title">Scaling Law — Càng to càng giỏi</div>
+      <div class="tl-desc">GPT-3 (175B params), GPT-4, Claude, Llama. Phát hiện ra: nếu tăng số parameters + data + compute theo tỉ lệ đúng, model sẽ liên tục giỏi hơn. Không có điểm dừng rõ ràng.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot green"></div>
+      <div class="tl-year">2022 – nay</div>
+      <div class="tl-title">ChatGPT & The AI moment</div>
+      <div class="tl-desc">ChatGPT đạt 100 triệu users trong 2 tháng. Không phải vì AI thông minh hơn đột ngột — mà vì lần đầu tiên nó đủ tốt để người thường dùng hàng ngày.</div>
+    </div>
+
+  </div>
+
+  <div class="callout green">
+    <strong>Takeaway cho học viên:</strong> AI không "thông minh" theo nghĩa con người. Nó không hiểu, không cảm nhận, không có ý thức. Nó giỏi vì Attention Algorithm cho phép nó xử lý <em>pattern trong ngôn ngữ ở quy mô khổng lồ</em>. Đây là sự khác biệt quan trọng nhất bạn cần hiểu.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 2: ATTENTION -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-attention">
+  <div class="eyebrow">Module 01 · Concept Core</div>
+  <h2>Attention Algorithm —<br>Cơ chế làm AI hiểu ngữ cảnh</h2>
+  <p class="lead">
+    Ý tưởng đơn giản nhưng mạnh: khi đọc một từ, thay vì nhớ toàn bộ câu theo thứ tự, hãy <strong>hỏi mọi từ trong câu: "Mày quan trọng với tao bao nhiêu?"</strong> rồi tổng hợp câu trả lời theo trọng số.
+  </p>
+
+  <div class="callout">
+    <strong>Ví dụ:</strong> "Con mèo không ăn vì <em>nó</em> đã no rồi." — Từ "nó" chỉ ai? Con mèo hay cái bát? Attention nhìn toàn bộ câu và tính: "mèo" có trọng số cao nhất → "nó" = con mèo.
+  </div>
+
+  <h3>Demo — Click một từ để thấy Attention hoạt động</h3>
+  <div class="sentence-demo">
+    <p class="label">// Sentence: "The bank near the river flooded after heavy rain"</p>
+    <div class="word-row" id="wordRow">
+      <span class="word" data-idx="0" onclick="focusWord(0)">The</span>
+      <span class="word" data-idx="1" onclick="focusWord(1)">bank</span>
+      <span class="word" data-idx="2" onclick="focusWord(2)">near</span>
+      <span class="word" data-idx="3" onclick="focusWord(3)">the</span>
+      <span class="word" data-idx="4" onclick="focusWord(4)">river</span>
+      <span class="word" data-idx="5" onclick="focusWord(5)">flooded</span>
+      <span class="word" data-idx="6" onclick="focusWord(6)">after</span>
+      <span class="word" data-idx="7" onclick="focusWord(7)">heavy</span>
+      <span class="word" data-idx="8" onclick="focusWord(8)">rain</span>
+    </div>
+    <div class="demo-hint">👆 Click vào từ bất kỳ để thấy nó "attend" đến những từ nào</div>
+    <div class="attention-label" id="attnLabel"></div>
+    <div class="attention-bar" id="attnBar"></div>
+
+    <div class="attn-legend">
+      <div><i style="background:var(--gold)"></i> <strong style="color:var(--text)">Vàng</strong> = từ bạn đang click (<em>query</em> — từ đang "hỏi")</div>
+      <div><i style="background:#4f8ef7"></i> <strong style="color:var(--text)">Xanh</strong> = các từ được nó chú ý tới — <strong style="color:var(--text)">càng đậm / càng cao = điểm càng lớn</strong></div>
+      <div><i style="background:#4f8ef7;opacity:.25"></i> Xanh mờ = gần như bị bỏ qua</div>
+    </div>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px">
+      Tổng các điểm của một hàng luôn = <strong>100%</strong> (softmax) — attention là việc <em>chia một lượng chú ý cố định</em> cho các từ, không phải chấm điểm độc lập từng từ.
+    </p>
+  </div>
+
+  <h3>Tại sao Attention mạnh hơn RNN?</h3>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">🐌</div>
+      <div class="card-title">RNN / LSTM (trước 2017)</div>
+      <div class="card-desc">Đọc tuần tự từ trái sang phải. Từ đầu câu bị "pha loãng" qua nhiều bước. Không thể xử lý song song → chậm. Câu dài &gt; 50 từ là vấn đề.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <div class="card-title">Attention / Transformer (2017+)</div>
+      <div class="card-desc">Mọi từ nhìn mọi từ khác <em>cùng lúc</em>. Xử lý song song toàn bộ câu trên GPU. Câu 1000 từ cũng ok. Đây là lý do GPT-4 có context 128K tokens.</div>
+    </div>
+  </div>
+
+  <h3>Multi-Head Attention — Nhìn bằng nhiều "góc"</h3>
+  <p>Không chỉ một lớp attention — Transformer dùng <strong>nhiều head song song</strong>. Mỗi head học một kiểu quan hệ khác nhau:</p>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Head 1 — Cú pháp</div>
+      <div class="card-desc">"bank" → chủ ngữ hay tân ngữ? Học quan hệ ngữ pháp.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Head 2 — Ngữ nghĩa</div>
+      <div class="card-desc">"bank" gần "river" → nghĩa là bờ sông, không phải ngân hàng.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Head 3 — Coref</div>
+      <div class="card-desc">"nó" chỉ cái gì? Học phép tham chiếu đại từ.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Tóm lại cho học viên:</strong> Attention = cơ chế để mỗi từ "hỏi thăm" tất cả từ khác và tính điểm quan trọng. Kết quả: model biết "bank" trong ngữ cảnh sông = bờ, trong ngữ cảnh tiền = ngân hàng. Đây là bước nhảy vọt mà không thuật toán nào trước đó làm được.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 3: VECTORS & NEXT WORD -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-vectors">
+  <div class="eyebrow">Module 01 · How LLM Actually Works</div>
+  <h2>Bên trong LLM không có chữ —<br>chỉ có số và xác suất</h2>
+  <p class="lead">
+    LLM không đọc text. Nó <strong>chuyển mọi thứ thành vector số</strong>, tính toán, rồi đoán từ tiếp theo. Không có "hiểu biết" thực sự — chỉ là pattern matching cực kỳ tinh vi trên tỉ tỉ tham số.
+  </p>
+
+  <h3>Bước 1 — Vectorization: Biến từ thành tọa độ</h3>
+  <p>Mỗi token được ánh xạ thành một vector hàng trăm đến hàng nghìn chiều. Các từ có nghĩa gần nhau sẽ có vector gần nhau trong không gian này.</p>
+  <p><strong>Cách đọc biểu đồ dưới:</strong> mỗi từ là một hàng, mỗi <em>cột</em> là một chiều (dimension) — ở đây rút gọn còn <strong>6 chiều có tên</strong> để nhìn được bằng mắt. Thanh càng dài = giá trị của từ đó ở chiều đó càng cao.</p>
+
+  <div class="vector-demo">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.1em">// Vector embedding — 6 chiều minh hoạ (model thật: 768 → 4096 chiều, không có tên)</p>
+
+    <div class="vec-row vec-head">
+      <div class="vec-word"></div>
+      <div class="vec-bar-wrap">
+        <div class="vec-dim" style="color:#4f8ef7">1. Royal<span>hoàng gia</span></div>
+        <div class="vec-dim" style="color:#a78bfa">2. Female<span>giới nữ</span></div>
+        <div class="vec-dim" style="color:#f0b429">3. Power<span>quyền lực</span></div>
+        <div class="vec-dim" style="color:#2dd4a0">4. Animal<span>động vật</span></div>
+        <div class="vec-dim" style="color:#f87171">5. Human<span>con người</span></div>
+        <div class="vec-dim" style="color:#38bdf8">6. Finance<span>tài chính</span></div>
+      </div>
+      <div class="vec-label"></div>
+    </div>
+
+    <div class="vec-row">
+      <div class="vec-word">King 👑</div>
+      <div class="vec-bar-wrap">
+        <div class="vec-segment" title="Royal 0.95"><div class="vec-fill" style="width:95%;background:#4f8ef7"></div></div>
+        <div class="vec-segment" title="Female 0.10"><div class="vec-fill" style="width:10%;background:#a78bfa"></div></div>
+        <div class="vec-segment" title="Power 0.90"><div class="vec-fill" style="width:90%;background:#f0b429"></div></div>
+        <div class="vec-segment" title="Animal 0.05"><div class="vec-fill" style="width:5%;background:#2dd4a0"></div></div>
+        <div class="vec-segment" title="Human 0.92"><div class="vec-fill" style="width:92%;background:#f87171"></div></div>
+        <div class="vec-segment" title="Finance 0.20"><div class="vec-fill" style="width:20%;background:#38bdf8"></div></div>
+      </div>
+      <div class="vec-label">[.95 .10 .90 .05 .92 .20]</div>
+    </div>
+
+    <div class="vec-row">
+      <div class="vec-word">Queen 👸</div>
+      <div class="vec-bar-wrap">
+        <div class="vec-segment" title="Royal 0.93"><div class="vec-fill" style="width:93%;background:#4f8ef7"></div></div>
+        <div class="vec-segment" title="Female 0.95"><div class="vec-fill" style="width:95%;background:#a78bfa"></div></div>
+        <div class="vec-segment" title="Power 0.85"><div class="vec-fill" style="width:85%;background:#f0b429"></div></div>
+        <div class="vec-segment" title="Animal 0.05"><div class="vec-fill" style="width:5%;background:#2dd4a0"></div></div>
+        <div class="vec-segment" title="Human 0.92"><div class="vec-fill" style="width:92%;background:#f87171"></div></div>
+        <div class="vec-segment" title="Finance 0.18"><div class="vec-fill" style="width:18%;background:#38bdf8"></div></div>
+      </div>
+      <div class="vec-label">[.93 .95 .85 .05 .92 .18]<br>≈ King, lệch mỗi chiều 2</div>
+    </div>
+
+    <div class="vec-row">
+      <div class="vec-word">Man 🧔</div>
+      <div class="vec-bar-wrap">
+        <div class="vec-segment" title="Royal 0.08"><div class="vec-fill" style="width:8%;background:#4f8ef7"></div></div>
+        <div class="vec-segment" title="Female 0.10"><div class="vec-fill" style="width:10%;background:#a78bfa"></div></div>
+        <div class="vec-segment" title="Power 0.50"><div class="vec-fill" style="width:50%;background:#f0b429"></div></div>
+        <div class="vec-segment" title="Animal 0.05"><div class="vec-fill" style="width:5%;background:#2dd4a0"></div></div>
+        <div class="vec-segment" title="Human 0.95"><div class="vec-fill" style="width:95%;background:#f87171"></div></div>
+        <div class="vec-segment" title="Finance 0.20"><div class="vec-fill" style="width:20%;background:#38bdf8"></div></div>
+      </div>
+      <div class="vec-label">[.08 .10 .50 .05 .95 .20]</div>
+    </div>
+
+    <div class="vec-row">
+      <div class="vec-word">Woman 👩</div>
+      <div class="vec-bar-wrap">
+        <div class="vec-segment" title="Royal 0.08"><div class="vec-fill" style="width:8%;background:#4f8ef7"></div></div>
+        <div class="vec-segment" title="Female 0.95"><div class="vec-fill" style="width:95%;background:#a78bfa"></div></div>
+        <div class="vec-segment" title="Power 0.50"><div class="vec-fill" style="width:50%;background:#f0b429"></div></div>
+        <div class="vec-segment" title="Animal 0.05"><div class="vec-fill" style="width:5%;background:#2dd4a0"></div></div>
+        <div class="vec-segment" title="Human 0.95"><div class="vec-fill" style="width:95%;background:#f87171"></div></div>
+        <div class="vec-segment" title="Finance 0.20"><div class="vec-fill" style="width:20%;background:#38bdf8"></div></div>
+      </div>
+      <div class="vec-label">[.08 .95 .50 .05 .95 .20]<br>≈ Man, lệch mỗi chiều 2</div>
+    </div>
+
+    <div class="vec-row">
+      <div class="vec-word">Dog 🐕</div>
+      <div class="vec-bar-wrap">
+        <div class="vec-segment" title="Royal 0.05"><div class="vec-fill" style="width:5%;background:#4f8ef7"></div></div>
+        <div class="vec-segment" title="Female 0.50"><div class="vec-fill" style="width:50%;background:#a78bfa"></div></div>
+        <div class="vec-segment" title="Power 0.15"><div class="vec-fill" style="width:15%;background:#f0b429"></div></div>
+        <div class="vec-segment" title="Animal 0.97"><div class="vec-fill" style="width:97%;background:#2dd4a0"></div></div>
+        <div class="vec-segment" title="Human 0.08"><div class="vec-fill" style="width:8%;background:#f87171"></div></div>
+        <div class="vec-segment" title="Finance 0.03"><div class="vec-fill" style="width:3%;background:#38bdf8"></div></div>
+      </div>
+      <div class="vec-label">[.05 .50 .15 .97 .08 .03]<br>xa hẳn cụm hoàng gia</div>
+    </div>
+
+    <div class="vec-row">
+      <div class="vec-word">Bank 🏦</div>
+      <div class="vec-bar-wrap">
+        <div class="vec-segment" title="Royal 0.08"><div class="vec-fill" style="width:8%;background:#4f8ef7"></div></div>
+        <div class="vec-segment" title="Female 0.50"><div class="vec-fill" style="width:50%;background:#a78bfa"></div></div>
+        <div class="vec-segment" title="Power 0.55"><div class="vec-fill" style="width:55%;background:#f0b429"></div></div>
+        <div class="vec-segment" title="Animal 0.03"><div class="vec-fill" style="width:3%;background:#2dd4a0"></div></div>
+        <div class="vec-segment" title="Human 0.15"><div class="vec-fill" style="width:15%;background:#f87171"></div></div>
+        <div class="vec-segment" title="Finance 0.96"><div class="vec-fill" style="width:96%;background:#38bdf8"></div></div>
+      </div>
+      <div class="vec-label">[.08 .50 .55 .03 .15 .96]<br>đổi theo ngữ cảnh!</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Lưu ý quan trọng:</strong> 6 chiều có tên ở trên chỉ là <em>minh hoạ</em>. Trong model thật, vector có 768–4096 chiều và <strong>không chiều nào có tên</strong> — chúng được học tự động từ dữ liệu, con người không đọc được từng chiều. Ta chỉ đo được <em>khoảng cách</em> giữa các vector.
+  </div>
+
+  <h3>King − Man + Woman ≈ Queen — phép trừ từ ngữ nghĩa là gì?</h3>
+  <p>
+    Vì mỗi từ giờ là một <strong>dãy số</strong>, ta có thể <strong>cộng trừ chúng như toạ độ</strong>. Lấy đúng 4 từ trong bảng trên, trừ theo từng chiều một:
+  </p>
+
+  <div class="math-demo">
+    <div class="math-row head">
+      <div class="math-op"></div>
+      <div class="math-cell"><b>Royal</b></div>
+      <div class="math-cell"><b>Female</b></div>
+      <div class="math-cell"><b>Power</b></div>
+      <div class="math-cell"><b>Animal</b></div>
+      <div class="math-cell"><b>Human</b></div>
+      <div class="math-cell"><b>Finance</b></div>
+    </div>
+    <div class="math-row">
+      <div class="math-op">King</div>
+      <div class="math-cell">.95</div><div class="math-cell">.10</div><div class="math-cell">.90</div>
+      <div class="math-cell">.05</div><div class="math-cell">.92</div><div class="math-cell">.20</div>
+    </div>
+    <div class="math-row">
+      <div class="math-op">− Man</div>
+      <div class="math-cell">.08</div><div class="math-cell changed">.10</div><div class="math-cell">.50</div>
+      <div class="math-cell">.05</div><div class="math-cell">.95</div><div class="math-cell">.20</div>
+    </div>
+    <div class="math-row">
+      <div class="math-op">+ Woman</div>
+      <div class="math-cell">.08</div><div class="math-cell changed">.95</div><div class="math-cell">.50</div>
+      <div class="math-cell">.05</div><div class="math-cell">.95</div><div class="math-cell">.20</div>
+    </div>
+    <div class="math-row result sep">
+      <div class="math-op">= điểm X</div>
+      <div class="math-cell">.95</div><div class="math-cell">.95</div><div class="math-cell">.90</div>
+      <div class="math-cell">.05</div><div class="math-cell">.92</div><div class="math-cell">.20</div>
+    </div>
+    <div class="math-row target">
+      <div class="math-op">Queen</div>
+      <div class="math-cell">.93</div><div class="math-cell">.95</div><div class="math-cell">.85</div>
+      <div class="math-cell">.05</div><div class="math-cell">.92</div><div class="math-cell">.18</div>
+    </div>
+    <p class="math-tail">
+      Kết quả <strong style="color:var(--gold)">điểm X</strong> không phải là một từ — nó chỉ là một <em>vị trí</em> trong không gian.
+      Nhưng khi đi tìm từ nào nằm gần vị trí đó nhất, câu trả lời là
+      <strong style="color:var(--green)">Queen</strong> (lệch nhiều nhất 0.05 ở một chiều). Đó là ý nghĩa của dấu <strong>≈</strong>.
+    </p>
+  </div>
+
+  <p><strong>Vì sao điều này đáng chú ý?</strong> Hãy nhìn phép trừ <code style="color:var(--purple)">Man → Woman</code>: nó chỉ đổi <strong>đúng một chiều</strong> (Female: .10 → .95), các chiều khác giữ nguyên. Cộng thay đổi đó vào <code>King</code> thì cũng chỉ đổi đúng chiều đó — và ta rơi trúng chỗ <code>Queen</code> đang đứng. Nói cách khác, <strong>"giới tính" là một hướng cố định trong không gian</strong>: cùng một mũi tên đưa Man→Woman cũng đưa King→Queen, uncle→aunt, actor→actress.</p>
+
+  <div class="callout gold">
+    <strong>Đây mới là điều quan trọng:</strong> không ai lập trình chiều "Female" hay chiều "Royal" cả. Model chỉ được cho đọc văn bản và tập đoán từ tiếp theo — thế mà nó tự sắp xếp các từ thành một không gian có <em>hình học nhất quán</em>. Đó là lý do ta nói embedding <strong>học được quan hệ ngữ nghĩa</strong>, chứ không phải chỉ <strong>đếm từ</strong>: nếu chỉ đếm/đánh số từ (mỗi từ một ID), thì "King" và "Queen" là hai con số vô quan hệ — chẳng có phép trừ nào để làm, và mọi cặp từ đều cách nhau như nhau.
+  </div>
+
+  <div class="callout">
+    <strong>Nói cho công bằng:</strong> ví dụ kinh điển này đến từ <strong>word2vec (2013)</strong> — loại embedding <em>tĩnh</em>, mỗi từ một vector cố định. Hai lưu ý: (1) khi đo, người ta <em>loại 3 từ đầu vào ra khỏi danh sách ứng viên</em>, nếu không thì từ gần "điểm X" nhất thường lại chính là "King"; (2) LLM hiện đại <strong>không</strong> có một vector cố định cho mỗi từ — attention viết lại nó theo ngữ cảnh (xem tab ②). Nên hãy dùng ví dụ này như một <em>trực giác</em> về việc "nghĩa có hình học", đừng hiểu là mô tả chính xác cách GPT hoạt động.
+  </div>
+
+  <h3>Dễ nhầm — "Vector/embedding" ở đây <em>không phải</em> là RAG</h3>
+  <p>Cả hai đều nói về vector, nên rất dễ lẫn. Nhưng đây là hai thứ khác nhau, ở hai chỗ khác nhau:</p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">Embedding <em>bên trong</em> LLM — nội dung tab này</div>
+      <div class="card-desc">
+        Do <strong>chính LLM</strong> sinh ra ở lớp đầu vào, cho <strong>từng token</strong>.
+        Là vector <strong>động</strong>: attention viết lại nó theo ngữ cảnh (nên "bank" cạnh "river" khác "bank" cạnh "money").
+        Không ai lưu nó lại — nó chỉ tồn tại trong lúc model tính toán để <strong>đoán token tiếp theo</strong>.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔎</div>
+      <div class="card-title">Embedding trong RAG — học ở Module sau</div>
+      <div class="card-desc">
+        Do một <strong>embedding model riêng</strong> sinh ra, cho <strong>cả một đoạn văn</strong> (chunk).
+        Là vector <strong>tĩnh</strong>: tính một lần rồi <strong>lưu vào vector database</strong>.
+        Dùng để <strong>đo cosine similarity</strong>, tìm đoạn giống câu hỏi nhất — việc này xảy ra <em>trước khi</em> gọi LLM, hoàn toàn <em>bên ngoài</em> model.
+      </div>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Một câu để nhớ:</strong> tab ② và ③ mô tả <strong>bên trong cái model</strong> (attention, token, xác suất) — đây là kiến thức nền để hiểu vì sao LLM chỉ biết những gì nó đã học và có thể "bịa". RAG là <strong>thứ bạn lắp thêm bên ngoài</strong> để đưa dữ liệu riêng của mình vào prompt. Học phần trong trước, phần ngoài sau.
+  </div>
+
+  <h3>Bước 2 — Next Token Prediction: LLM làm gì?</h3>
+  <p>LLM không "nghĩ ra" câu trả lời. Nó liên tục làm một việc duy nhất: <strong>đoán từ tiếp theo có xác suất cao nhất</strong>, rồi thêm từ đó vào input, rồi đoán tiếp — lặp lại cho đến hết.</p>
+
+  <div class="nextword-demo">
+    <div id="nwPrompt" class="nw-prompt">The weather today is very ___</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;font-family:'JetBrains Mono',monospace">// Top candidates — click để chọn từ tiếp theo:</p>
+    <div class="nw-candidates" id="nwCands"></div>
+    <p class="demo-hint" id="nwHint" style="font-size:12px;color:var(--muted)">👆 Click một từ để "generate" token tiếp theo</p>
+  </div>
+
+  <div class="callout">
+    <strong>Điều này có nghĩa gì?</strong> LLM không "biết" đáp án đúng. Nó sampling từ phân phối xác suất. Đó là lý do tại sao cùng một prompt, chạy nhiều lần cho kết quả khác nhau — và tại sao <strong>temperature</strong> (độ ngẫu nhiên) quan trọng.
+  </div>
+
+  <h3>Parallel Processing — Lý do AI nhanh như vậy</h3>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">Trong training</div>
+      <div class="card-desc">Toàn bộ câu được xử lý song song trên GPU. Hàng nghìn GPU chạy đồng thời. GPT-4 được train với hàng nghìn tỉ tokens trong nhiều tháng.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💬</div>
+      <div class="card-title">Trong inference</div>
+      <div class="card-desc">Mỗi token được generate tuần tự (vì cần token trước để đoán token sau). Nhưng phần attention computation vẫn song song. KV Cache giúp tăng tốc đáng kể.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 4: TOKENS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-tokens">
+  <div class="eyebrow">Module 01 · Token Deep Dive</div>
+  <h2>Tokens — Đơn vị ngôn ngữ<br>của LLM</h2>
+  <p class="lead">
+    LLM không đọc theo chữ cái, không đọc theo từ. Nó đọc theo <strong>token</strong> — các mảnh text được phân tách theo thuật toán BPE (Byte Pair Encoding). Hiểu token = hiểu tại sao AI đôi khi "lạ" với tiếng Việt, tên riêng, hay code.
+  </p>
+
+  <div class="token-demo">
+    <p style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:8px">// Nhập text để xem tokenization (simplified simulation):</p>
+    <textarea class="token-input" id="tokenInput" rows="2" placeholder="Nhập câu tiếng Anh hoặc tiếng Việt...">The attention algorithm changed everything in 2017</textarea>
+    <div class="token-output" id="tokenOutput"></div>
+    <div class="token-count" id="tokenCount"></div>
+  </div>
+
+  <div class="token-facts">
+    <div class="tfact"><strong>~4 ký tự</strong>bình quân 1 token (tiếng Anh)</div>
+    <div class="tfact"><strong>~2–3 ký tự</strong>bình quân 1 token (tiếng Việt — tốn hơn!)</div>
+    <div class="tfact"><strong>128K tokens</strong>context window của Claude 3.5 Sonnet</div>
+    <div class="tfact"><strong>$0.003</strong>per 1K tokens (GPT-4o input, tham khảo)</div>
+  </div>
+
+  <h3>Tại sao token quan trọng với AI Engineer?</h3>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">💰</div>
+      <div class="card-title">Chi phí</div>
+      <div class="card-desc">API tính tiền theo token. System prompt dài + context dài = tốn tiền. Optimize prompt = tiết kiệm thật sự ở scale lớn.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📏</div>
+      <div class="card-title">Context Limit</div>
+      <div class="card-desc">Mỗi model có giới hạn token. Vượt quá = model bị truncate hoặc error. RAG giải quyết vấn đề này bằng cách chỉ đưa vào context những gì cần thiết.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌍</div>
+      <div class="card-title">Tiếng Việt tốn token hơn</div>
+      <div class="card-desc">BPE được train chủ yếu trên tiếng Anh. Tiếng Việt có dấu → mỗi từ thành nhiều token hơn. "không" có thể thành 2–3 tokens.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Thực hành:</strong> Vào <strong>platform.openai.com/tokenizer</strong> hoặc <strong>tiktokenizer.vercel.app</strong> — paste một đoạn tiếng Việt và tiếng Anh cùng nghĩa, so sánh số token. Đây là bài tập đầu tiên cho học viên.
+  </div>
+
+  <h3>Context Window — Bộ nhớ ngắn hạn của LLM</h3>
+  <p>Mọi thứ LLM "nhớ" trong một conversation đều nằm trong context window. Khi đầy, nó không thể nhớ thêm. Đây là lý do:</p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">🔮</div>
+      <div class="card-title">RAG ra đời</div>
+      <div class="card-desc">Thay vì nhét toàn bộ knowledge base vào context, chỉ retrieve đúng phần liên quan. Context nhỏ hơn, nhanh hơn, rẻ hơn.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <div class="card-title">Memory trong Agent</div>
+      <div class="card-desc">Agent cần lưu conversation history ra ngoài (database), sau đó load lại khi cần. Không có RAM vô hạn như con người.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 5: CODE ASSIST TOOLS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-tools">
+  <div class="eyebrow">Module 03 · Code Assist</div>
+  <h2>Bộ công cụ AI Dev —<br>Claude Code + IntelliJ + Docker</h2>
+  <p class="lead">
+    Chúng ta sẽ không dạy mọi AI coding tool trên thị trường. Chúng ta dùng <strong>3 công cụ cụ thể</strong> tạo thành một workflow hoàn chỉnh: từ prompt đến code đến deployment.
+  </p>
+
+  <div class="tool-card">
+    <div class="tool-icon">🤖</div>
+    <div class="tool-info">
+      <div class="tool-name">Claude Code (Anthropic)</div>
+      <div class="tool-role">Terminal-native Autonomous Agent · 1M token context</div>
+      <div class="tool-desc">
+        Agent chạy trong terminal — không phải IDE extension. Đặc điểm nổi bật: context window 1M tokens (lớn nhất hiện tại), có thể hold toàn bộ codebase lớn trong memory cùng lúc. Tự chủ cao nhất trong 3 tools: đọc files, viết code, chạy terminal commands, chạy tests, tự sửa lỗi trong một vòng lặp liên tục cho đến khi xong task. Phù hợp nhất cho complex multi-file refactor, large codebase understanding, và autonomous task execution. Đòi hỏi thoải mái với CLI. Có thể dùng song song với IntelliJ hoặc bất kỳ IDE nào.
+      </div>
+      <div class="tool-tips">
+        <span class="tip">npm install -g @anthropic-ai/claude-code</span>
+        <span class="tip">claude → interactive terminal session</span>
+        <span class="tip">1M token context</span>
+        <span class="tip">Autonomous multi-step tasks</span>
+        <span class="tip">SWE-bench 80.8% (2026)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout gold" style="margin-bottom:16px">
+    <strong>Về GitHub Copilot (2026):</strong> Copilot hiện nay KHÔNG chỉ là inline autocomplete. Nó có đầy đủ Agent Mode (multi-file editing, chạy terminal commands, tự sửa lỗi), Coding Agent (assign GitHub Issue → tự viết code → mở PR không cần người can thiệp), Code Review Agent, MCP support, và multi-model (GPT-5, Claude, Gemini). Sự khác biệt với Claude Code không còn là "inline vs agent" mà là về <em>nơi chúng sống</em> và workflow philosophy — Copilot sống trong GitHub ecosystem và IDE, Claude Code sống trong terminal với context window lớn hơn nhiều.
+  </div>
+
+  <h3>So sánh 3 paradigm chính (2026)</h3>
+  <div class="grid-3" style="margin-bottom:24px">
+    <div class="card">
+      <div class="card-icon">⌨️</div>
+      <div class="card-title">GitHub Copilot</div>
+      <div class="card-desc">IDE extension + GitHub cloud agent. Sống trong workflow GitHub (Issues → PR → Review). Multi-IDE: VS Code, JetBrains, Xcode, Neovim. Rẻ nhất ($10/mo). Agent mode GA từ 2025. Best for: teams đã dùng GitHub ecosystem.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🖥️</div>
+      <div class="card-title">Cursor</div>
+      <div class="card-desc">Full AI-native IDE (VS Code fork). Composer cho multi-file visual edits. Background agents chạy trong cloud VM. Best developer experience theo review thực tế. Best for: daily IDE-based development, greenfield projects.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <div class="card-title">Claude Code</div>
+      <div class="card-desc">Terminal-native agent. Context window 1M tokens — lớn nhất. Tự chủ nhất cho complex tasks. Không cần IDE riêng, dùng với bất kỳ editor nào. Best for: large codebase, complex refactor, autonomous execution.</div>
+    </div>
+  </div>
+
+  <div class="tool-card">
+    <div class="tool-icon">🧠</div>
+    <div class="tool-info">
+      <div class="tool-name">IntelliJ IDEA + GitHub Copilot Agent Mode</div>
+      <div class="tool-role">IDE · Enterprise Backend · JetBrains ecosystem</div>
+      <div class="tool-desc">
+        IDE tốt nhất cho Java/Kotlin/Python với AI tích hợp sâu. Từ March 2026, GitHub Copilot Agent Mode GA trên JetBrains — có thể multi-file edit, chạy terminal commands, tự sửa lỗi ngay trong IntelliJ. Cũng hỗ trợ chọn model: Claude Sonnet 4.6, GPT-5, Gemini. Dùng IntelliJ cho backend enterprise vì project structure awareness và refactoring tools tốt nhất trong ngành.
+      </div>
+      <div class="tool-tips">
+        <span class="tip">Copilot Agent Mode GA (JetBrains, 3/2026)</span>
+        <span class="tip">Multi-model: Claude / GPT / Gemini</span>
+        <span class="tip">Generate + run unit tests</span>
+        <span class="tip">MCP server support</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-card">
+    <div class="tool-icon">🐳</div>
+    <div class="tool-info">
+      <div class="tool-name">Docker + Docker Compose</div>
+      <div class="tool-role">Local Dev Environment · Containerization</div>
+      <div class="tool-desc">
+        Mọi service chúng ta build trong khóa học đều chạy trong Docker. Lý do: local environment nhất quán, dễ share, dễ deploy. Claude Code và Copilot đều có thể generate Dockerfile và docker-compose.yml khi bạn mô tả stack — và tự chạy <code>docker compose up</code> để verify kết quả ngay.
+      </div>
+      <div class="tool-tips">
+        <span class="tip">docker compose up -d</span>
+        <span class="tip">Ollama trong container</span>
+        <span class="tip">pgvector service</span>
+        <span class="tip">FastAPI app container</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Workflow thực tế — 3 tools kết hợp</h3>
+  <div class="callout green">
+    <strong>Vòng lặp AI-augmented development (pattern phổ biến nhất 2026):</strong><br><br>
+    1. <strong>IntelliJ + Copilot Agent</strong> — Mở project, plan feature, Agent Mode xử lý edits nhỏ và vừa trực tiếp trong IDE<br>
+    2. <strong>Claude Code (terminal)</strong> — Khi task phức tạp, cần hiểu nhiều files cùng lúc → giao cho Claude Code với 1M token context<br>
+    3. <strong>Docker</strong> — Build và chạy service ngay lập tức để test thực tế, cả Claude Code và Copilot đều có thể chạy docker commands tự động<br>
+    4. Lặp lại: bug xuất hiện → AI tự detect từ output → tự sửa → verify → commit
+  </div>
+
+  <h3>Lab thực hành — Buổi 1</h3>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🎯 Mục tiêu</div>
+      <div class="card-desc">Setup môi trường hoàn chỉnh. Dùng Claude Code để generate một FastAPI hello-world, containerize với Docker, chạy được trên máy local.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📦 Stack cần cài</div>
+      <div class="card-desc">Docker Desktop · IntelliJ IDEA Community (free) · Node.js (cho Claude Code CLI) · Python 3.11+ · Git</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Prompt mẫu cho Claude Code:</strong> <em>"Create a FastAPI service with a /health endpoint and a /chat endpoint that calls Ollama's local API. Include a Dockerfile and docker-compose.yml. Use Python 3.11."</em> — Học viên sẽ thấy Claude đọc context, tạo files, giải thích từng bước.
+  </div>
+</div>
+
+<script>
+// ── NAV ──
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── ATTENTION DEMO ──
+// Mỗi hàng = phân phối attention của MỘT từ lên cả 9 từ. Tổng mỗi hàng = 1.00 (softmax).
+const attentionData = {
+  0: [.10,.45,.08,.04,.12,.10,.03,.04,.04], // The     → danh từ nó bổ nghĩa: bank
+  1: [.04,.18,.06,.03,.34,.22,.03,.04,.06], // bank    → river, flooded
+  2: [.03,.25,.12,.04,.35,.10,.03,.03,.05], // near    → nối bank ↔ river
+  3: [.04,.08,.06,.10,.52,.08,.03,.04,.05], // the     → river
+  4: [.03,.28,.07,.05,.17,.26,.03,.04,.07], // river   → bank, flooded
+  5: [.03,.14,.04,.03,.30,.15,.05,.06,.20], // flooded → river, rain
+  6: [.03,.04,.03,.03,.06,.30,.12,.07,.32], // after   → flooded, rain
+  7: [.02,.03,.02,.03,.04,.08,.05,.13,.60], // heavy   → rain
+  8: [.02,.04,.02,.03,.06,.28,.08,.32,.15], // rain    → heavy, flooded
+};
+const words = ['The','bank','near','the','river','flooded','after','heavy','rain'];
+const explanations = {
+  0: '"The" là mạo từ → dồn gần một nửa chú ý vào danh từ nó bổ nghĩa: "bank"',
+  1: '"bank" chú ý nhiều nhất đến "river" (34%) và "flooded" (22%) → nghĩa là <strong>bờ sông</strong>, không phải ngân hàng',
+  2: '"near" là giới từ → nối hai đầu của nó: "bank" và "river"',
+  3: '"the" thứ hai bổ nghĩa cho "river" → 52% chú ý dồn vào đó',
+  4: '"river" liên kết chặt với "bank" và "flooded" — chính nó định nghĩa ngữ cảnh cả câu',
+  5: '"flooded" phụ thuộc vào "river" (cái gì ngập) và "rain" (vì sao ngập)',
+  6: '"after" là từ nối thời gian → nhìn về sự kiện trước ("flooded") và sau ("rain")',
+  7: '"heavy" là tính từ → 60% chú ý vào danh từ nó mô tả: "rain"',
+  8: '"rain" gắn với "heavy" và là nguyên nhân của "flooded"',
+};
+
+// Dựng biểu đồ cột (một cột / từ) để nhìn rõ cột nào ứng với từ nào
+const attnBar = document.getElementById('attnBar');
+words.forEach((w, i) => {
+  attnBar.insertAdjacentHTML('beforeend',
+    `<div class="abar-col" id="c${i}">
+       <div class="abar-pct" id="p${i}"></div>
+       <div class="abar" id="b${i}"></div>
+       <div class="abar-word">${w}</div>
+     </div>`);
+});
+
+function focusWord(idx) {
+  const ws = document.querySelectorAll('.word');
+  ws.forEach(w => w.className = 'word');
+  ws[idx].classList.add('focus');
+
+  const scores = attentionData[idx];
+  const max = Math.max(...scores);
+
+  scores.forEach((s, i) => {
+    // reset màu mỗi lần click — nếu không, cột vàng của lần click trước vẫn còn vàng
+    const bar = document.getElementById('b' + i);
+    const col = document.getElementById('c' + i);
+    col.classList.toggle('is-query', i === idx);
+    bar.style.background = i === idx ? 'var(--gold)' : 'var(--accent)';
+    bar.style.height = Math.max(4, Math.round(s / max * 56)) + 'px';
+    bar.style.opacity = i === idx ? 1 : (.2 + s / max * .8).toFixed(2);
+    document.getElementById('p' + i).textContent = Math.round(s * 100) + '%';
+
+    if (i === idx) return;
+    const norm = s / max;
+    const cls = norm > .8 ? 'hi-5' : norm > .6 ? 'hi-4' : norm > .4 ? 'hi-3' : norm > .2 ? 'hi-2' : 'hi-1';
+    ws[i].classList.add(cls);
+  });
+
+  const lbl = document.getElementById('attnLabel');
+  lbl.classList.add('show');
+  lbl.innerHTML = `<span style="color:var(--gold)">↑ "${words[idx]}" chia 100% chú ý của nó cho 9 từ như sau</span>${explanations[idx] ? ' — ' + explanations[idx] : ''}`;
+}
+
+// ── NEXT WORD DEMO ──
+const nwScenarios = [
+  { prompt: 'The weather today is very ___', words: [{w:'hot',p:.32},{w:'cold',p:.28},{w:'nice',p:.21},{w:'humid',p:.12},{w:'dark',p:.07}] },
+  { prompt: 'I need to write a Python function to ___', words: [{w:'sort',p:.28},{w:'parse',p:.24},{w:'return',p:.20},{w:'calculate',p:.18},{w:'read',p:.10}] },
+  { prompt: 'The attention algorithm was published in ___', words: [{w:'2017',p:.72},{w:'2018',p:.14},{w:'2016',p:.08},{w:'2019',p:.04},{w:'2015',p:.02}] },
+];
+let nwIdx = 0;
+
+function renderNW() {
+  const s = nwScenarios[nwIdx % nwScenarios.length];
+  document.getElementById('nwPrompt').textContent = s.prompt;
+  const c = document.getElementById('nwCands');
+  c.innerHTML = '';
+  s.words.forEach(({w, p}) => {
+    const el = document.createElement('div');
+    el.className = 'nw-cand';
+    el.innerHTML = `<div class="nw-word">${w}</div><div class="nw-prob">${Math.round(p*100)}%</div><div class="nw-bar" style="width:${Math.round(p*100)}%;max-width:80px;height:3px;background:var(--accent);border-radius:2px"></div>`;
+    el.onclick = () => {
+      document.querySelectorAll('.nw-cand').forEach(x => x.classList.remove('picked'));
+      el.classList.add('picked');
+      setTimeout(() => {
+        const newPrompt = s.prompt.replace('___', w) + ' ___';
+        nwIdx++;
+        const next = nwScenarios[nwIdx % nwScenarios.length];
+        next.prompt = newPrompt.length < 80 ? newPrompt : nwScenarios[nwIdx % nwScenarios.length].prompt;
+        renderNW();
+      }, 600);
+    };
+    c.appendChild(el);
+  });
+}
+renderNW();
+
+// ── TOKEN DEMO ──
+const colorPalette = ['#4f8ef7','#a78bfa','#2dd4a0','#f0b429','#f87171','#60a5fa','#c084fc','#34d399'];
+function simpleTokenize(text) {
+  // Simple BPE-like simulation
+  const tokens = [];
+  const words = text.split(/(\s+|[.,!?;:'"()\[\]{}])/);
+  words.forEach(w => {
+    if (!w) return;
+    if (/^\s+$/.test(w)) { tokens.push('Ġ' + w.trim() || '▁'); return; }
+    if (w.length <= 3) { tokens.push(w); return; }
+    // Simulate subword tokenization for longer words
+    if (w.length > 8) {
+      tokens.push(w.slice(0,4));
+      tokens.push(w.slice(4));
+    } else if (w.length > 5) {
+      tokens.push(w.slice(0,3));
+      tokens.push(w.slice(3));
+    } else {
+      tokens.push(w);
+    }
+  });
+  return tokens.filter(t => t.length > 0);
+}
+
+function updateTokens() {
+  const text = document.getElementById('tokenInput').value;
+  const tokens = simpleTokenize(text);
+  const out = document.getElementById('tokenOutput');
+  out.innerHTML = '';
+  tokens.forEach((tok, i) => {
+    const el = document.createElement('span');
+    el.className = 'tok';
+    const color = colorPalette[i % colorPalette.length];
+    el.style.color = color;
+    el.style.borderColor = color + '44';
+    el.style.background = color + '11';
+    el.textContent = tok === '▁' ? '·space·' : tok;
+    out.appendChild(el);
+  });
+  document.getElementById('tokenCount').textContent =
+    `~${tokens.length} tokens · ~${Math.ceil(tokens.length * 0.00015 * 100)/100}¢ per request (GPT-4o estimate)`;
+}
+document.getElementById('tokenInput').addEventListener('input', updateTokens);
+updateTokens();
+</script>
+</body>
+</html>

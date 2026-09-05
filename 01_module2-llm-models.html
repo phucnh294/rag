@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2 — LLM Models</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #07090f;
+  --surface: #0e1118;
+  --card: #131720;
+  --border: #1c2236;
+  --accent: #4f8ef7;
+  --gold: #f0b429;
+  --green: #2dd4a0;
+  --red: #f87171;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+  --text: #dde3f0;
+  --muted: #5a6580;
+  --dim: #2a3350;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7,9,15,.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0 24px;
+}
+.nav-btn {
+  padding: 14px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .2s, border-color .2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── SECTIONS ── */
+.section { display: none; max-width: 900px; margin: 0 auto; padding: 56px 24px 100px; }
+.section.active { display: block; }
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  margin-top: 36px;
+}
+p { color: #a0aec0; margin-bottom: 16px; }
+strong { color: var(--text); }
+
+.lead {
+  font-size: 1.1rem;
+  color: #8899bb;
+  line-height: 1.75;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── CALLOUT ── */
+.callout {
+  border-left: 3px solid var(--accent);
+  background: rgba(79,142,247,.06);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-size: 14px;
+  color: #8fadd4;
+}
+.callout.gold { border-color: var(--gold); background: rgba(240,180,41,.06); color: #bfa060; }
+.callout.green { border-color: var(--green); background: rgba(45,212,160,.06); color: #60c9a8; }
+.callout.purple { border-color: var(--purple); background: rgba(167,139,250,.06); color: #b0a0e0; }
+.callout strong { color: var(--text); }
+
+/* ── GRID CARDS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.card-icon { font-size: 1.6rem; margin-bottom: 10px; }
+.card-title { font-weight: 600; font-size: .9rem; margin-bottom: 6px; color: var(--text); }
+.card-desc { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+
+/* ── PARAM SLIDER DEMO ── */
+.param-demo {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin: 28px 0;
+}
+.param-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.param-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  color: var(--gold);
+  font-weight: 700;
+}
+input[type=range] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--dim);
+  outline: none;
+  -webkit-appearance: none;
+  margin: 8px 0 4px;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+input[type=range]::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+.range-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.param-output {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: 8px;
+  border-left: 3px solid var(--gold);
+}
+.param-output-label {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.param-output-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── COMPARISON TABLE ── */
+.cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 13px;
+}
+.cmp-table th {
+  background: var(--surface);
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  font-size: 12px;
+}
+.cmp-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+.cmp-table tr:hover td { background: rgba(79,142,247,.03); }
+.tag-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.tag-open { background: rgba(45,212,160,.12); color: var(--green); }
+.tag-closed { background: rgba(248,113,113,.12); color: var(--red); }
+
+/* ── ARCHITECTURE DIAGRAM ── */
+.arch {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin: 28px 0;
+}
+.arch-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex-wrap: wrap;
+}
+.arch-box {
+  flex: 1;
+  min-width: 130px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 14px;
+  text-align: center;
+}
+.arch-box.engine { border-color: rgba(79,142,247,.4); background: rgba(79,142,247,.05); }
+.arch-box.vector { border-color: rgba(167,139,250,.4); background: rgba(167,139,250,.05); }
+.arch-icon { font-size: 1.8rem; margin-bottom: 8px; }
+.arch-box-title { font-weight: 600; font-size: .85rem; color: var(--text); margin-bottom: 6px; }
+.arch-box-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.arch-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 1.4rem;
+  padding: 0 8px;
+}
+
+/* ── TERMINAL ── */
+.terminal {
+  background: #05070c;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+.terminal-bar {
+  background: #0d1119;
+  padding: 8px 14px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.tdot { width: 11px; height: 11px; border-radius: 50%; }
+.tdot.r { background: #ff5f56; }
+.tdot.y { background: #ffbd2e; }
+.tdot.g { background: #27c93f; }
+.terminal-title { font-size: 11px; color: var(--muted); margin-left: 8px; }
+.terminal-body { padding: 16px; font-size: 13px; line-height: 1.7; }
+.t-cmd { color: var(--green); }
+.t-out { color: var(--muted); }
+.t-hi { color: var(--cyan); }
+.t-prompt { color: var(--gold); }
+
+/* ── STAT ── */
+.stat-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+.stat {
+  flex: 1;
+  min-width: 130px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cyan);
+  margin-bottom: 4px;
+}
+.stat-label { font-size: 11px; color: var(--muted); }
+
+@media (max-width: 600px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .arch-arrow { transform: rotate(90deg); padding: 8px 0; }
+  .arch-box { min-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="show('what')">① LLM là gì</button>
+  <button class="nav-btn" onclick="show('params')">② Parameters</button>
+  <button class="nav-btn" onclick="show('settings')">③ Settings tác động</button>
+  <button class="nav-btn" onclick="show('inside')">④ Bên trong hệ thống</button>
+  <button class="nav-btn" onclick="show('ollama')">⑤ Ollama thực hành</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 1: WHAT IS AN LLM MODEL -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section active" id="s-what">
+  <div class="eyebrow">Module 02 · LLM Models</div>
+  <h2>LLM Model là gì?</h2>
+  <p class="lead">
+    LLM (Large Language Model) là một <strong>file khổng lồ chứa hàng tỉ con số</strong> — gọi là parameters (tham số). File này được "huấn luyện" trên lượng text khổng lồ để học cách dự đoán từ tiếp theo. Khi bạn nghe "GPT-4", "Claude", "Llama" — đó là các LLM model khác nhau, được train khác nhau, có kích thước khác nhau.
+  </p>
+
+  <h3>Model không phải là phần mềm — nó là "bộ não" đã học xong</h3>
+  <p>Hãy tưởng tượng thế này: model giống như một <strong>bộ não đã đông lạnh</strong> sau khi học. Bản thân nó không chạy được. Bạn cần một <em>engine</em> (động cơ) để nạp bộ não đó vào và cho nó suy nghĩ.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">Model (weights / trọng số)</div>
+      <div class="card-desc">Là file chứa hàng tỉ số đã học. Ví dụ: llama-3.1-8b có 8 tỉ parameters. Nó "tĩnh" — không tự chạy được.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">Engine (inference engine)</div>
+      <div class="card-desc">Phần mềm nạp model vào bộ nhớ và chạy tính toán để sinh ra câu trả lời. Ví dụ: Ollama, vLLM, llama.cpp.</div>
+    </div>
+  </div>
+
+  <h3>Các "gia đình" LLM phổ biến (2026)</h3>
+  <table class="cmp-table">
+    <thead>
+      <tr><th>Model</th><th>Nhà phát triển</th><th>Loại</th><th>Đặc điểm</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>GPT-4o / GPT-5</strong></td><td>OpenAI</td><td><span class="tag-cell tag-closed">Closed</span></td><td>Chỉ dùng qua API, mạnh toàn diện</td></tr>
+      <tr><td><strong>Claude (Sonnet/Opus)</strong></td><td>Anthropic</td><td><span class="tag-cell tag-closed">Closed</span></td><td>Giỏi coding, reasoning, context dài</td></tr>
+      <tr><td><strong>Gemini</strong></td><td>Google</td><td><span class="tag-cell tag-closed">Closed</span></td><td>Multimodal, context cực dài</td></tr>
+      <tr><td><strong>Llama 3.x</strong></td><td>Meta</td><td><span class="tag-cell tag-open">Open</span></td><td>Tải về chạy local miễn phí</td></tr>
+      <tr><td><strong>Qwen 2.5</strong></td><td>Alibaba</td><td><span class="tag-cell tag-open">Open</span></td><td>Giỏi coding, nhiều size</td></tr>
+      <tr><td><strong>Mistral / Mixtral</strong></td><td>Mistral AI</td><td><span class="tag-cell tag-open">Open</span></td><td>Nhỏ gọn, hiệu quả cao</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Open vs Closed — điều quan trọng nhất cho AI Engineer:</strong> Closed model (GPT, Claude) chỉ dùng được qua API trả tiền, dữ liệu đi ra ngoài. Open model (Llama, Qwen) tải về chạy trên máy mình — miễn phí, dữ liệu không rời khỏi máy. Trong môi trường nhạy cảm (ngân hàng, y tế), open model chạy local thường là bắt buộc.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 2: PARAMETERS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-params">
+  <div class="eyebrow">Module 02 · Parameters</div>
+  <h2>Parameters — "Kích thước não" của model</h2>
+  <p class="lead">
+    Khi bạn thấy tên model có "8B", "70B", "405B" — đó là số <strong>parameters</strong> (tỉ tham số). Đây là số lượng con số mà model đã học được. Nhiều parameters hơn thường = model thông minh hơn, nhưng cũng = nặng hơn, chậm hơn, tốn RAM/GPU hơn.
+  </p>
+
+  <h3>Con số "B" nghĩa là gì?</h3>
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num">1B</div>
+      <div class="stat-label">1 tỉ parameters<br>= ~1–2 GB RAM</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">8B</div>
+      <div class="stat-label">8 tỉ parameters<br>= ~5–6 GB RAM</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">70B</div>
+      <div class="stat-label">70 tỉ parameters<br>= ~40 GB RAM</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">405B</div>
+      <div class="stat-label">405 tỉ parameters<br>= cần cluster GPU</div>
+    </div>
+  </div>
+
+  <div class="callout gold">
+    <strong>Quy tắc thực tế cho máy local:</strong> Máy laptop thường của bạn (16GB RAM) chạy tốt model 7B–8B. Máy có GPU 24GB chạy được 14B–32B. Model 70B+ cần máy trạm hoặc nhiều GPU. Đây là lý do các model nhỏ như Llama 3.1 8B rất phổ biến cho dev local.
+  </div>
+
+  <h3>Nhiều parameters có luôn tốt hơn không?</h3>
+  <p>Không hẳn. Đây là điều nhiều người hiểu nhầm:</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">✅</div>
+      <div class="card-title">Model lớn (70B+) giỏi hơn ở...</div>
+      <div class="card-desc">Reasoning phức tạp, kiến thức rộng, hiểu ngữ cảnh tinh vi, ít "ảo giác" hơn, viết code khó.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <div class="card-title">Model nhỏ (7B–8B) thắng ở...</div>
+      <div class="card-desc">Tốc độ nhanh, chạy được local, chi phí thấp, đủ tốt cho task đơn giản như phân loại, tóm tắt ngắn.</div>
+    </div>
+  </div>
+
+  <p>Một model 8B được <strong>fine-tune tốt cho một nhiệm vụ cụ thể</strong> có thể vượt model 70B ở nhiệm vụ đó. Chọn model là bài toán cân bằng: độ thông minh cần thiết ↔ tốc độ ↔ chi phí ↔ phần cứng bạn có.</p>
+
+  <h3>Quantization — "nén" model để chạy nhẹ hơn</h3>
+  <p>Bạn sẽ thấy các tên như <code>llama3.1:8b-q4</code>. Chữ <strong>q4</strong> là quantization — kỹ thuật nén các con số từ độ chính xác cao (16-bit) xuống thấp hơn (4-bit) để model chiếm ít RAM hơn, chạy nhanh hơn, đổi lại mất một chút chất lượng.</p>
+
+  <table class="cmp-table">
+    <thead>
+      <tr><th>Mức</th><th>Kích thước</th><th>Chất lượng</th><th>Khi nào dùng</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>q4</strong> (4-bit)</td><td>Nhỏ nhất</td><td>Chấp nhận được</td><td>Máy yếu, cần tốc độ</td></tr>
+      <tr><td><strong>q8</strong> (8-bit)</td><td>Trung bình</td><td>Tốt</td><td>Cân bằng phổ biến nhất</td></tr>
+      <tr><td><strong>fp16</strong> (16-bit)</td><td>Lớn nhất</td><td>Đầy đủ</td><td>Có GPU mạnh, cần chất lượng cao</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 3: SETTINGS AFFECT RESPONSE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-settings">
+  <div class="eyebrow">Module 02 · Inference Settings</div>
+  <h2>Các setting tác động đến câu trả lời</h2>
+  <p class="lead">
+    Cùng một model, cùng một câu hỏi — nhưng bạn có thể điều chỉnh <strong>cách nó trả lời</strong> qua vài thông số khi gọi. Đây không phải là parameters của model (đã cố định sau khi train), mà là <em>inference settings</em> — cài đặt lúc chạy. Quan trọng nhất là <strong>Temperature</strong>.
+  </p>
+
+  <h3>Thử ngay — Kéo Temperature xem câu trả lời đổi thế nào</h3>
+  <div class="param-demo">
+    <div class="param-label">
+      <span>TEMPERATURE</span>
+      <span class="param-value" id="tempVal">0.7</span>
+    </div>
+    <input type="range" id="tempSlider" min="0" max="100" value="70" oninput="updateTemp(this.value)">
+    <div class="range-hints">
+      <span>0.0 — Chính xác, lặp lại</span>
+      <span>2.0 — Sáng tạo, ngẫu nhiên</span>
+    </div>
+    <div class="param-output">
+      <div class="param-output-label">Prompt: "Viết một câu về con mèo"</div>
+      <div class="param-output-text" id="tempOutput"></div>
+    </div>
+  </div>
+
+  <div class="callout gold">
+    <strong>Quy tắc chọn Temperature:</strong> Việc cần chính xác (trích xuất dữ liệu, trả lời factual, code) → dùng <strong>0.0–0.3</strong>. Việc cần sáng tạo (viết marketing, brainstorm, story) → dùng <strong>0.7–1.2</strong>. Temperature = 0 không hẳn "luôn giống hệt" nhưng gần như deterministic.
+  </div>
+
+  <h3>Các setting quan trọng khác</h3>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🎲 Top-p (nucleus sampling)</div>
+      <div class="card-desc">Giới hạn model chỉ chọn trong nhóm từ có xác suất cộng dồn tới p. top_p=0.9 = chỉ xét 90% khả năng cao nhất. Thường để cùng temperature.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔢 Top-k</div>
+      <div class="card-desc">Chỉ xét k từ có xác suất cao nhất ở mỗi bước. top_k=40 = chỉ chọn trong 40 từ hàng đầu. Lọc bớt lựa chọn "rác".</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📏 Max tokens</div>
+      <div class="card-desc">Giới hạn độ dài câu trả lời tối đa. Đặt để tránh model viết lan man và kiểm soát chi phí (vì tính tiền theo token).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🚫 Stop sequences</div>
+      <div class="card-desc">Chuỗi ký tự báo model dừng lại. Ví dụ dừng khi gặp "\n\n" hoặc "###". Hữu ích khi muốn output có cấu trúc.</div>
+    </div>
+  </div>
+
+  <h3>System Prompt — cách mạnh nhất để định hình model</h3>
+  <p>Ngoài các con số, thứ tác động lớn nhất đến hành vi model là <strong>system prompt</strong> — chỉ dẫn ban đầu bạn đặt cho model. Đây là nơi bạn nói "Mày là chuyên gia tài chính, trả lời ngắn gọn bằng tiếng Việt".</p>
+
+  <div class="callout purple">
+    <strong>Cùng model, khác system prompt = khác hoàn toàn:</strong> Một Llama 3.1 8B với system prompt "Bạn là trợ lý pháp lý cẩn thận" sẽ hành xử rất khác với cùng model đó nhưng prompt "Bạn là copywriter vui nhộn". Bạn sẽ học sâu về prompt engineering ở các module sau.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 4: WHAT'S INSIDE THE SYSTEM -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-inside">
+  <div class="eyebrow">Module 02 · System Architecture</div>
+  <h2>Bên trong một hệ thống LLM có gì?</h2>
+  <p class="lead">
+    Khi xây dựng ứng dụng AI thực tế, LLM model chỉ là <strong>một mảnh</strong>. Một hệ thống hoàn chỉnh thường có hai thành phần cốt lõi: <strong>LLM Engine</strong> (chạy model) và <strong>Vector Data Store</strong> (lưu kiến thức). Hiểu hai cái này là nền tảng cho toàn bộ phần RAG sắp tới.
+  </p>
+
+  <div class="arch">
+    <div class="arch-flow">
+      <div class="arch-box">
+        <div class="arch-icon">👤</div>
+        <div class="arch-box-title">User Query</div>
+        <div class="arch-box-desc">Câu hỏi của người dùng</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box vector">
+        <div class="arch-icon">🗄️</div>
+        <div class="arch-box-title">Vector Store</div>
+        <div class="arch-box-desc">Tìm kiến thức liên quan</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box engine">
+        <div class="arch-icon">⚙️</div>
+        <div class="arch-box-title">LLM Engine</div>
+        <div class="arch-box-desc">Model sinh câu trả lời</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box">
+        <div class="arch-icon">💬</div>
+        <div class="arch-box-title">Response</div>
+        <div class="arch-box-desc">Trả lời cho user</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Thành phần 1 — LLM Engine (động cơ chạy model)</h3>
+  <p>Là phần mềm nạp model vào RAM/GPU và thực hiện inference (suy luận). Nó nhận input, chạy hàng tỉ phép tính, trả về token. Không có engine, model chỉ là file chết.</p>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Ollama</div>
+      <div class="card-desc">Dễ nhất cho dev local. Một lệnh là chạy được model. Chúng ta sẽ dùng cái này.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">vLLM</div>
+      <div class="card-desc">Engine production, tối ưu tốc độ cho server phục vụ nhiều user cùng lúc.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">llama.cpp</div>
+      <div class="card-desc">Engine nền tảng, chạy được cả trên CPU. Ollama build trên nó.</div>
+    </div>
+  </div>
+
+  <h3>Thành phần 2 — Vector Data Store (kho kiến thức)</h3>
+  <p>LLM model có kiến thức "đóng băng" từ lúc train, và không biết dữ liệu riêng của bạn (tài liệu công ty, database nội bộ). <strong>Vector store</strong> giải quyết việc này: nó lưu tài liệu của bạn dưới dạng vector số, để khi user hỏi, hệ thống tìm đúng đoạn liên quan và đưa vào cho model.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">📥</div>
+      <div class="card-title">Cách hoạt động</div>
+      <div class="card-desc">Tài liệu → chia nhỏ (chunk) → biến thành vector (embedding) → lưu vào vector DB. Khi hỏi, câu hỏi cũng thành vector và tìm các vector gần nhất.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗃️</div>
+      <div class="card-title">Vector DB phổ biến</div>
+      <div class="card-desc">pgvector (PostgreSQL), Chroma, Qdrant, Weaviate, Pinecone. Chúng ta sẽ dùng pgvector ở Module 5.</div>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <strong>Đây chính là RAG (báo trước Module 4–5):</strong> Kết hợp LLM Engine + Vector Store = kiến trúc RAG (Retrieval-Augmented Generation). Model không cần "nhớ" mọi thứ — nó chỉ cần được đưa đúng thông tin vào đúng lúc. Module này bạn chỉ cần hiểu hai thành phần tồn tại và vai trò của chúng.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 5: OLLAMA HANDS-ON -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s-ollama">
+  <div class="eyebrow">Module 02 · Lab · Ollama</div>
+  <h2>Ollama — Chạy LLM open source trên máy của bạn</h2>
+  <p class="lead">
+    Ollama là công cụ giúp bạn <strong>tải về (pull) và chạy các model open source ngay trên máy local</strong> chỉ bằng vài lệnh. Không cần API key, không tốn tiền, dữ liệu không rời khỏi máy. Đây là công cụ nền tảng chúng ta dùng xuyên suốt khóa học.
+  </p>
+
+  <h3>Bước 1 — Cài Ollama</h3>
+  <p>Tải tại <strong>ollama.com</strong> cho Windows / Mac / Linux. Sau khi cài, mở terminal và kiểm tra:</p>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">terminal</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama --version</span><br>
+      <span class="t-out">ollama version 0.x.x</span>
+    </div>
+  </div>
+
+  <h3>Bước 2 — Pull một model về máy</h3>
+  <p>Dùng lệnh <code>ollama pull</code> để tải model. Model được tải từ thư viện của Ollama (giống như Docker Hub cho model):</p>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">terminal — pull model</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama pull llama3.1:8b</span><br>
+      <span class="t-out">pulling manifest</span><br>
+      <span class="t-out">pulling </span><span class="t-hi">4.7 GB</span><span class="t-out"> ████████████ 100%</span><br>
+      <span class="t-out">success ✓</span><br><br>
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama pull qwen2.5-coder:14b</span><span class="t-out">   # model giỏi code</span><br>
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama pull nomic-embed-text</span><span class="t-out">     # embedding model cho RAG</span>
+    </div>
+  </div>
+
+  <h3>Bước 3 — Chạy và chat với model</h3>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">terminal — run</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">ollama run llama3.1:8b</span><br>
+      <span class="t-prompt">&gt;&gt;&gt;</span> <span class="t-hi">Giải thích RAG trong 1 câu</span><br>
+      <span class="t-out">RAG là kỹ thuật cho LLM truy xuất tài liệu</span><br>
+      <span class="t-out">liên quan trước khi trả lời, giúp câu trả</span><br>
+      <span class="t-out">lời chính xác và cập nhật hơn.</span><br>
+      <span class="t-prompt">&gt;&gt;&gt;</span> <span class="t-out">/bye</span>
+    </div>
+  </div>
+
+  <h3>Bước 4 — Gọi Ollama qua API (quan trọng cho dev)</h3>
+  <p>Ollama tự động chạy một server HTTP ở <code>localhost:11434</code>. Đây là cách bạn tích hợp model vào code:</p>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">terminal — API call</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">curl http://localhost:11434/api/generate -d '{</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"model": "llama3.1:8b",</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"prompt": "Xin chào",</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"stream": false</span><br>
+      <span class="t-cmd">}'</span><br>
+      <span class="t-out">{"response": "Xin chào! Tôi có thể giúp gì?", ...}</span>
+    </div>
+  </div>
+
+  <h3>Các lệnh Ollama hữu ích</h3>
+  <table class="cmp-table">
+    <thead>
+      <tr><th>Lệnh</th><th>Chức năng</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>ollama list</code></td><td>Xem các model đã tải về máy</td></tr>
+      <tr><td><code>ollama pull &lt;model&gt;</code></td><td>Tải model về</td></tr>
+      <tr><td><code>ollama run &lt;model&gt;</code></td><td>Chạy và chat với model</td></tr>
+      <tr><td><code>ollama rm &lt;model&gt;</code></td><td>Xóa model khỏi máy (giải phóng ổ đĩa)</td></tr>
+      <tr><td><code>ollama ps</code></td><td>Xem model nào đang chạy trong RAM</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Chạy trực tiếp trên máy chỉ là bước làm quen.</strong> Ở lab thực tế, chúng ta đóng gói bằng <strong>Docker Compose</strong> — mỗi model là một service độc lập, có Dockerfile, env và volume riêng. Cách này giống môi trường production và dễ nhân bản khi thêm model.
+  </div>
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:44px 0">
+
+  <div class="eyebrow" style="color:var(--green)">Module 02 · Lab chính · Docker Compose</div>
+  <h2 style="font-size:1.9rem;margin-top:8px">🧪 Lab Buổi 2 — llama3.1 trong Docker Compose</h2>
+  <p class="lead">
+    Mục tiêu: chạy model <strong>llama3.1 (8B)</strong> như một service Docker độc lập, có volume riêng, env riêng, entrypoint riêng. Model được <strong>pre-pull sẵn lúc build</strong> nên container khởi động là chạy ngay. Đây đúng pattern dự án thật — mỗi model một service.
+  </p>
+
+  <h3>Nguyên tắc thiết kế — mỗi service độc lập</h3>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">🧩</div>
+      <div class="card-title">Volume riêng</div>
+      <div class="card-desc">Mỗi model có volume lưu weights riêng (<code>ollama_llama31_data</code>). Thêm model khác không đụng nhau.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📄</div>
+      <div class="card-title">Env riêng</div>
+      <div class="card-desc"><code>.env.common</code> (chung) + <code>.env.ollama.llama3.8b</code> (riêng model). Mỗi model một file env.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🚪</div>
+      <div class="card-title">Entrypoint riêng</div>
+      <div class="card-desc">Tách file <code>entrypoint.sh</code> để sau này sửa logic khởi động mà không đụng Dockerfile.</div>
+    </div>
+  </div>
+
+  <h3>Cấu trúc thư mục</h3>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">project/</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-out">project/</span><br>
+      <span class="t-out">├── </span><span class="t-hi">docker-compose.yml</span><br>
+      <span class="t-out">├── </span><span class="t-hi">.env.common</span><span class="t-out">              # biến chung (TZ, keep-alive)</span><br>
+      <span class="t-out">├── </span><span class="t-hi">.env.ollama.llama3.8b</span><span class="t-out">    # tên model, host, cổng</span><br>
+      <span class="t-out">├── </span><span class="t-hi">DockerfileLlmLlama318b</span><span class="t-out">   # pre-pull llama3.1 lúc build</span><br>
+      <span class="t-out">└── </span><span class="t-cmd">entrypoint.sh</span><span class="t-out">            # chỉ bật ollama serve</span>
+    </div>
+  </div>
+
+  <h3>File .env — pattern common + model</h3>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="font-family:'JetBrains Mono',monospace;color:var(--cyan);margin-bottom:10px">.env.common</div>
+      <div class="card-desc" style="font-family:'JetBrains Mono',monospace;line-height:1.7">
+        TZ="America/Chicago"<br>
+        OLLAMA_KEEP_ALIVE=5m
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-family:'JetBrains Mono',monospace;color:var(--gold);margin-bottom:10px">.env.ollama.llama3.8b</div>
+      <div class="card-desc" style="font-family:'JetBrains Mono',monospace;line-height:1.7">
+        OLLAMA_LLAMA31_HOST=host.docker.internal<br>
+        OLLAMA_LLAMA31_HOST_PORT=11434<br>
+        OLLAMA_LLAMA31_PORT=11434<br>
+        OLLAMA_LLAMA31_MODEL=llama3.1:latest
+      </div>
+    </div>
+  </div>
+  <div class="callout gold">
+    <strong>Cách đặt tên biến:</strong> mỗi biến có prefix theo model (<code>OLLAMA_LLAMA31_*</code>) để khi có nhiều model chúng không đụng nhau. <code>HOST_PORT</code> = cổng publish ra host (mỗi model một cổng riêng, vd 11434, 11435, 11436...); <code>PORT</code> = cổng trong container, Ollama luôn nghe 11434.
+  </div>
+
+  <h3>DockerfileLlmLlama318b — pre-pull model lúc build</h3>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">DockerfileLlmLlama318b</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-hi">FROM</span><span class="t-out"> ollama/ollama:latest</span><br>
+      <span class="t-hi">WORKDIR</span><span class="t-out"> /root</span><br><br>
+      <span class="t-out"># entrypoint tách riêng</span><br>
+      <span class="t-hi">COPY</span><span class="t-out"> entrypoint.sh /usr/local/bin/entrypoint.sh</span><br>
+      <span class="t-hi">RUN</span><span class="t-out"> chmod +x /usr/local/bin/entrypoint.sh</span><br><br>
+      <span class="t-out"># Pre-pull model NGAY lúc build → bake vào image</span><br>
+      <span class="t-hi">RUN</span><span class="t-cmd"> ollama serve &amp; \</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;&nbsp;&nbsp;server_pid=$! &amp;&amp; \</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;&nbsp;&nbsp;until ollama list &gt;/dev/null 2&gt;&amp;1; do sleep 1; done &amp;&amp; \</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;&nbsp;&nbsp;ollama pull llama3.1:8b &amp;&amp; \</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;&nbsp;&nbsp;kill $server_pid</span><br><br>
+      <span class="t-hi">ENTRYPOINT</span><span class="t-out"> ["entrypoint.sh"]</span>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">Model được nạp thẳng vào image lúc build. Dùng <code>until ollama list</code> để chờ server sẵn sàng thay vì <code>sleep 5</code> — chắc chắn hơn. Lưu ý: model được hardcode ở đây (<code>llama3.1:8b</code>) vì lúc build chưa đọc được biến env; biến <code>OLLAMA_LLAMA31_MODEL</code> là để <em>app</em> biết gọi model nào lúc chạy.</p>
+
+  <h3>entrypoint.sh — đơn giản, chỉ serve</h3>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">entrypoint.sh</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-out">#!/bin/bash</span><br>
+      <span class="t-out">set -e</span><br><br>
+      <span class="t-cmd">echo "Starting Ollama server with pre-pulled model..."</span><br>
+      <span class="t-cmd">exec ollama serve</span>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">Vì model đã bake sẵn lúc build, entrypoint chỉ cần bật server. Dùng <code>exec</code> để Ollama nhận signal đúng (dừng container sạch). File tách riêng nên sau này muốn thêm warmup hay pull thêm model thì sửa ở đây, không đụng Dockerfile.</p>
+
+  <h3>docker-compose.yml — service llama31-8b</h3>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">docker-compose.yml</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-hi">services:</span><br>
+      <span class="t-out">&nbsp;&nbsp;</span><span class="t-cmd">llama31-8b:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;build:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;context: .</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dockerfile: DockerfileLlmLlama318b</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;container_name: llama31-8b</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;env_file:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- .env.common</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- .env.ollama.llama3.8b</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;restart: unless-stopped</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;ports:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- </span><span class="t-hi">"${OLLAMA_LLAMA31_HOST_PORT}:${OLLAMA_LLAMA31_PORT}"</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;volumes:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- ollama_llama31_data:/root/.ollama</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;deploy:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resources:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reservations:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devices:</span><br>
+      <span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- capabilities: [gpu]</span><span class="t-out">  # dùng GPU nếu có</span><br><br>
+      <span class="t-hi">volumes:</span><br>
+      <span class="t-out">&nbsp;&nbsp;ollama_llama31_data:</span>
+    </div>
+  </div>
+
+  <h3>Chạy lab</h3>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">terminal</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">docker compose up -d --build</span><br>
+      <span class="t-out"># lần build đầu mất vài phút vì pull llama3.1 (~4.9 GB) vào image</span><br><br>
+      <span class="t-prompt">$</span> <span class="t-cmd">docker compose logs -f llama31-8b</span><br>
+      <span class="t-out">Starting Ollama server with pre-pulled model...</span><br>
+      <span class="t-hi">Listening on [::]:11434</span><br><br>
+      <span class="t-prompt">$</span> <span class="t-cmd">curl http://localhost:11434/api/tags</span><span class="t-out">   # kiểm tra model đã sẵn</span>
+    </div>
+  </div>
+
+  <h3>Gọi model — chỉnh tham số để xem kết quả đổi</h3>
+  <p>Model chạy ở <code>localhost:11434</code>. Gọi API với các tham số (nối lại Module ③ Settings) — đổi <code>temperature</code>, <code>top_k</code>, <code>top_p</code> và so sánh:</p>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+      <span class="terminal-title">terminal — API call</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-prompt">$</span> <span class="t-cmd">curl http://localhost:11434/api/generate -d '{</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"model": "llama3.1:latest",</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"prompt": "Viết hàm tính giai thừa bằng Python",</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"stream": false,</span><br>
+      <span class="t-cmd">&nbsp;&nbsp;"options": { "temperature": 0.2, "top_k": 20, "top_p": 0.5 }</span><br>
+      <span class="t-cmd">}'</span><br>
+      <span class="t-out">{"response": "def factorial(n): ...", ...}</span>
+    </div>
+  </div>
+
+  <div class="callout purple">
+    <strong>Bài tập chính:</strong> Gọi cùng một prompt với <code>temperature: 0.0</code> ba lần, rồi <code>temperature: 1.2</code> ba lần. So sánh: temperature thấp có ra kết quả giống nhau không? Cao thì sao? Đây là cách hiểu <em>probability sampling</em> bằng thực nghiệm.
+  </div>
+
+  <div class="callout gold">
+    <strong>App gọi model qua đâu?</strong> App container gọi model qua <code>host.docker.internal:11434</code> (biến <code>OLLAMA_LLAMA31_HOST</code> + <code>HOST_PORT</code>) — đi ra host rồi vào cổng đã publish. Đây là pattern dự án thật: mỗi model một host port, app không cần biết model nằm ở đâu, chỉ cần đúng địa chỉ. <em>Lưu ý:</em> trên Linux (không phải Docker Desktop) cần thêm <code>extra_hosts: ["host.docker.internal:host-gateway"]</code>.
+  </div>
+
+  <div class="callout green">
+    <strong>Thêm model thứ hai:</strong> Copy pattern — tạo <code>.env.ollama.mistral.24b</code> với <code>HOST_PORT</code> khác (vd 11435) + <code>DockerfileLlmMistral32</code> pull model khác + service mới với volume riêng <code>ollama_mistral_data</code>. Mỗi model hoàn toàn độc lập. Hỏi cùng một câu khó cho llama3.1 (8B) và mistral (24B), so sánh chất lượng và tốc độ — thấy rõ trade-off "thông minh vs nhanh" đã học ở Module ②.
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// Temperature demo
+const tempOutputs = {
+  low:  '"Con mèo đang ngủ trên ghế sofa." — Câu an toàn, dự đoán được, luôn ra kết quả tương tự. Model chọn từ có xác suất cao nhất.',
+  mid:  '"Con mèo lười biếng cuộn tròn bên cửa sổ nắng ấm." — Cân bằng giữa tự nhiên và sáng tạo. Đây là vùng dùng phổ biến nhất.',
+  high: '"Con mèo triết gia trầm ngâm ngắm vũ trụ qua khe cửa lúc nửa đêm." — Sáng tạo, bất ngờ, nhưng đôi khi lạc đề hoặc kỳ quặc. Model dám chọn từ ít khả năng hơn.'
+};
+function updateTemp(val) {
+  const t = (val / 50).toFixed(1);
+  document.getElementById('tempVal').textContent = t;
+  let out;
+  if (val < 30) out = tempOutputs.low;
+  else if (val < 110) out = (val < 75 ? tempOutputs.mid : tempOutputs.high);
+  else out = tempOutputs.high;
+  // finer control
+  if (val <= 25) out = tempOutputs.low;
+  else if (val <= 90) out = tempOutputs.mid;
+  else out = tempOutputs.high;
+  document.getElementById('tempOutput').textContent = out;
+}
+updateTemp(70);
+</script>
+</body>
+</html>

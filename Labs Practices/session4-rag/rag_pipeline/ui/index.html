@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Lab — Chat &amp; Upload</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #07090f; color: #dde3f0; font-family: 'Inter', 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 16px 24px; border-bottom: 1px solid #1c2236; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 15px; font-weight: 600; }
+  #upload-form { display: flex; gap: 8px; align-items: center; }
+  #upload-form input[type=file] { font-size: 12px; color: #5a6580; }
+  #doc-status-select, #doc-area-input { background: #131720; border: 1px solid #1c2236; border-radius: 6px; color: #9aa4bd; font-size: 12px; padding: 5px 6px; }
+  #doc-area-input { width: 120px; }
+  #upload-form button, #chat-form button {
+    background: #4f8ef7; color: #07090f; border: none; border-radius: 6px;
+    padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  #upload-form button:hover, #chat-form button:hover { opacity: .9; }
+  #upload-status { font-size: 11.5px; color: #5a6580; margin-left: 4px; }
+
+  #layout { flex: 1; display: flex; min-height: 0; }
+  #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  #messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { max-width: 720px; }
+  .msg .who { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+  .msg.user .who { color: #f0b429; }
+  .msg.rag .who { color: #22d3ee; }
+  .msg .body { font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: #cdd6e8; }
+  .msg .sources { margin-top: 8px; font-size: 11.5px; color: #5a6580; }
+  .msg .sources span { background: #131720; border: 1px solid #1c2236; border-radius: 4px; padding: 2px 8px; margin-right: 6px; display: inline-block; margin-top: 4px; }
+  .msg .rerank-flag { margin-left: 8px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .msg.rag .rerank-flag.on { color: #34d399; }
+  .msg.rag .rerank-flag.off { color: #5a6580; }
+
+  #chat-form { display: flex; gap: 8px; padding: 16px 24px; border-top: 1px solid #1c2236; align-items: center; }
+  #question { flex: 1; background: #131720; border: 1px solid #1c2236; border-radius: 8px; color: #dde3f0; padding: 10px 14px; font-size: 14px; }
+  #question:focus { outline: none; border-color: #4f8ef7; }
+  #rerank-toggle-label, #reference-toggle-label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #9aa4bd; white-space: nowrap; cursor: pointer; }
+
+  #debug-panel { width: 380px; flex-shrink: 0; border-left: 1px solid #1c2236; overflow-y: auto; padding: 16px; background: #0a0d16; }
+  #debug-panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #9aa4bd; margin-bottom: 4px; }
+  #filter-summary { font-size: 11px; color: #f0b429; margin-bottom: 12px; }
+  #debug-empty { font-size: 12.5px; color: #5a6580; }
+  .debug-card-head .status-badge { font-size: 9.5px; text-transform: uppercase; letter-spacing: .03em; color: #34d399; font-weight: 400; margin-left: 6px; }
+  .debug-card-head .area-badge { font-size: 9.5px; text-transform: uppercase; letter-spacing: .03em; color: #9aa4bd; font-weight: 400; margin-left: 6px; }
+  #debug-content section { margin-bottom: 20px; }
+  #debug-content h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: #22d3ee; margin-bottom: 8px; }
+  .debug-card { background: #131720; border: 1px solid #1c2236; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
+  .debug-card-head { font-size: 11.5px; font-weight: 600; color: #dde3f0; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 8px; }
+  .debug-card-head .score { color: #f0b429; font-weight: 700; white-space: nowrap; }
+  .debug-card-body { font-size: 11px; color: #9aa4bd; line-height: 1.5; max-height: 90px; overflow-y: auto; white-space: pre-wrap; }
+  .debug-doc-row { font-size: 11.5px; color: #cdd6e8; padding: 4px 0; border-bottom: 1px solid #1c2236; display: flex; justify-content: space-between; gap: 8px; }
+  .debug-doc-row .doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .debug-doc-row .doc-meta { color: #5a6580; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RAG Lab</h1>
+  <form id="upload-form">
+    <input type="file" id="file" accept=".md" required>
+    <select id="doc-status-select">
+      <option value="">status: (none)</option>
+      <option value="current">status: current</option>
+    </select>
+    <input type="text" id="doc-area-input" placeholder="area (optional)">
+    <button type="submit">Upload &amp; Index</button>
+    <span id="upload-status"></span>
+  </form>
+</header>
+
+<div id="layout">
+  <div id="main">
+    <div id="messages"></div>
+
+    <form id="chat-form">
+      <input type="text" id="question" placeholder="Ask a question about your indexed docs..." autocomplete="off" required>
+      <label id="rerank-toggle-label" for="rerank-toggle">
+        <input type="checkbox" id="rerank-toggle" checked>
+        Rerank
+      </label>
+      <label id="reference-toggle-label" for="reference-toggle">
+        <input type="checkbox" id="reference-toggle">
+        Include reference-only
+      </label>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <aside id="debug-panel">
+    <h2>Retrieval Debug</h2>
+    <div id="filter-summary" hidden></div>
+    <div id="debug-empty">Ask a question to see the retrieved candidates here.</div>
+    <div id="debug-content" hidden>
+      <section>
+        <h3>Before Reranking (<span id="before-count">0</span> candidates)</h3>
+        <div id="before-list"></div>
+      </section>
+      <section id="after-section">
+        <h3>After Reranking (<span id="after-count">0</span> shown)</h3>
+        <div id="after-list"></div>
+      </section>
+      <section>
+        <h3>References by Document</h3>
+        <div id="by-doc-list"></div>
+      </section>
+    </div>
+  </aside>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const chatForm = document.getElementById('chat-form');
+const questionEl = document.getElementById('question');
+const rerankToggleEl = document.getElementById('rerank-toggle');
+const referenceToggleEl = document.getElementById('reference-toggle');
+const uploadForm = document.getElementById('upload-form');
+const fileEl = document.getElementById('file');
+const docStatusSelectEl = document.getElementById('doc-status-select');
+const docAreaInputEl = document.getElementById('doc-area-input');
+const uploadStatusEl = document.getElementById('upload-status');
+
+const filterSummaryEl = document.getElementById('filter-summary');
+const debugEmptyEl = document.getElementById('debug-empty');
+const debugContentEl = document.getElementById('debug-content');
+const afterSectionEl = document.getElementById('after-section');
+const beforeCountEl = document.getElementById('before-count');
+const beforeListEl = document.getElementById('before-list');
+const afterCountEl = document.getElementById('after-count');
+const afterListEl = document.getElementById('after-list');
+const byDocListEl = document.getElementById('by-doc-list');
+
+function add(who, body, sources, reranked) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (who === 'RAG' ? 'rag' : 'user');
+
+  const whoEl = document.createElement('div');
+  whoEl.className = 'who';
+  whoEl.textContent = who;
+  if (reranked !== undefined) {
+    const flagEl = document.createElement('span');
+    flagEl.className = 'rerank-flag ' + (reranked ? 'on' : 'off');
+    flagEl.textContent = reranked ? '· reranked' : '· no rerank';
+    whoEl.appendChild(flagEl);
+  }
+  wrap.appendChild(whoEl);
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'body';
+  bodyEl.textContent = body;
+  wrap.appendChild(bodyEl);
+
+  if (sources && sources.length) {
+    const srcEl = document.createElement('div');
+    srcEl.className = 'sources';
+    sources.forEach(s => {
+      const tag = document.createElement('span');
+      tag.textContent = '📄 ' + s;
+      srcEl.appendChild(tag);
+    });
+    wrap.appendChild(srcEl);
+  }
+
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function renderCandidateCard(rank, candidate) {
+  const card = document.createElement('div');
+  card.className = 'debug-card';
+
+  const head = document.createElement('div');
+  head.className = 'debug-card-head';
+
+  const nameEl = document.createElement('span');
+  nameEl.textContent = `#${rank} ${candidate.source_path.split('/').pop()}`;
+  head.appendChild(nameEl);
+
+  const scoreEl = document.createElement('span');
+  scoreEl.className = 'score';
+  scoreEl.textContent = candidate.score;
+  if (candidate.status) {
+    const badgeEl = document.createElement('span');
+    badgeEl.className = 'status-badge';
+    badgeEl.textContent = candidate.status;
+    scoreEl.appendChild(badgeEl);
+  }
+  if (candidate.area) {
+    const areaEl = document.createElement('span');
+    areaEl.className = 'area-badge';
+    areaEl.textContent = candidate.area;
+    scoreEl.appendChild(areaEl);
+  }
+  head.appendChild(scoreEl);
+
+  card.appendChild(head);
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'debug-card-body';
+  bodyEl.textContent = candidate.content;
+  card.appendChild(bodyEl);
+
+  return card;
+}
+
+function renderDocRow(path, info) {
+  const row = document.createElement('div');
+  row.className = 'debug-doc-row';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'doc-name';
+  nameEl.textContent = path.split('/').pop();
+  row.appendChild(nameEl);
+
+  const metaEl = document.createElement('span');
+  metaEl.className = 'doc-meta';
+  metaEl.textContent = `${info.count} chunk(s) · best ${info.best.toFixed(4)}`;
+  row.appendChild(metaEl);
+
+  return row;
+}
+
+function renderDebugPanel(retrievalScores) {
+  if (!retrievalScores) {
+    debugEmptyEl.hidden = false;
+    debugContentEl.hidden = true;
+    return;
+  }
+  debugEmptyEl.hidden = true;
+  debugContentEl.hidden = false;
+
+  const filter = retrievalScores.metadata_filter;
+  if (filter && filter.excluded_count > 0) {
+    filterSummaryEl.hidden = false;
+    filterSummaryEl.textContent = filter.restricted_to_current
+      ? `Restricted to status=current — ${filter.excluded_count} reference-only candidate(s) excluded before reranking.`
+      : `${filter.excluded_count} candidate(s) excluded by metadata filter.`;
+  } else {
+    filterSummaryEl.hidden = true;
+  }
+
+  const before = retrievalScores.before_rerank || [];
+  beforeCountEl.textContent = before.length;
+  beforeListEl.innerHTML = '';
+  before.forEach((c, i) => beforeListEl.appendChild(renderCandidateCard(i + 1, c)));
+
+  const after = retrievalScores.after_rerank;
+  afterSectionEl.hidden = !after;
+  if (after) {
+    afterCountEl.textContent = after.length;
+    afterListEl.innerHTML = '';
+    after.forEach((c, i) => afterListEl.appendChild(renderCandidateCard(i + 1, c)));
+  }
+
+  const byDoc = {};
+  before.forEach(c => {
+    const key = c.source_path;
+    if (!byDoc[key]) byDoc[key] = { count: 0, best: -Infinity };
+    byDoc[key].count += 1;
+    byDoc[key].best = Math.max(byDoc[key].best, c.score);
+  });
+  byDocListEl.innerHTML = '';
+  Object.entries(byDoc)
+    .sort((a, b) => b[1].best - a[1].best)
+    .forEach(([path, info]) => byDocListEl.appendChild(renderDocRow(path, info)));
+}
+
+// Gửi câu hỏi -> POST /chat
+async function send(question) {
+  const r = await fetch("/chat", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      question,
+      rerank: rerankToggleEl.checked,
+      include_reference: referenceToggleEl.checked
+    })
+  });
+  const data = await r.json();     // {answer, sources, reranked, retrieval_scores}
+  add("RAG", data.answer, data.sources, data.reranked);
+  renderDebugPanel(data.retrieval_scores);
+}
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const question = questionEl.value.trim();
+  if (!question) return;
+  add("You", question);
+  questionEl.value = '';
+  try {
+    await send(question);
+  } catch (err) {
+    add("RAG", "Error: " + err.message);
+  }
+});
+
+// Upload file -> POST /upload (multipart) -> index
+async function upload(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  if (docStatusSelectEl.value) fd.append("status", docStatusSelectEl.value);
+  if (docAreaInputEl.value.trim()) fd.append("area", docAreaInputEl.value.trim());
+  const r = await fetch("/upload", { method: "POST", body: fd });
+  const data = await r.json();     // {chunks_indexed}
+  return data;
+}
+
+uploadForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const file = fileEl.files[0];
+  if (!file) return;
+  uploadStatusEl.textContent = 'Indexing...';
+  try {
+    const data = await upload(file);
+    uploadStatusEl.textContent = '';
+    add("RAG", `Indexed "${file.name}" — ${data.chunks_indexed} chunks.`);
+  } catch (err) {
+    uploadStatusEl.textContent = '';
+    add("RAG", "Upload error: " + err.message);
+  }
+});
+</script>
+</body>
+</html>

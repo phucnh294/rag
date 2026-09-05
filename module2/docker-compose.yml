@@ -1,0 +1,19 @@
+name: ollama
+
+services:
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ollama-gemma2b:latest
+    container_name: ollama-gemma2b
+    env_file:
+      - .env.common
+      - .env.gemma2b
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_gemma2b_data:/root/.ollama
+
+volumes:
+  ollama_gemma2b_data:

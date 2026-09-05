@@ -1,0 +1,24 @@
+# Secrets / local environment config — never commit real values.
+# See *.env.*.example / *.env.example templates alongside each real file.
+.env
+.env.*
+!*.env.example
+!.env.*.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Runtime logs (rotated app logs, not source)
+logs/
+*.log
+
+# Docker
+*.pid
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db

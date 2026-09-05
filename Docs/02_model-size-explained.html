@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hiểu về kích thước Model — 7B, 24B, 405B nghĩa là gì?</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+:root{
+  --bg:#070a12; --surface:#0d1220; --card:#131a2b; --border:#1e2740;
+  --accent:#4f8ef7; --gold:#f0b429; --green:#2dd4a0; --purple:#a78bfa;
+  --cyan:#22d3ee; --red:#f87171; --orange:#fb923c;
+  --text:#e2e8f5; --muted:#5f6b8a; --dim:#2a3454;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;font-size:15px}
+.wrap{max-width:920px;margin:0 auto;padding:48px 22px 100px}
+
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;line-height:1.1;margin-bottom:16px;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700;margin:56px 0 8px;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:600;margin:28px 0 10px;color:var(--text)}
+p{color:#9aa8c4;margin-bottom:14px}
+strong{color:var(--text)}
+.lead{font-size:1.12rem;color:#8496b8;line-height:1.75;margin-bottom:8px}
+.hr{border:none;border-top:1px solid var(--border);margin:20px 0 0}
+
+/* ── PARAMETER CONCEPT ── */
+.concept{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;margin:24px 0;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center}
+@media(max-width:640px){.concept{grid-template-columns:1fr}}
+.concept svg{width:100%;height:auto}
+.concept-text .badge{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);background:rgba(240,180,41,.1);padding:3px 10px;border-radius:6px;display:inline-block;margin-bottom:10px}
+
+/* ── EXPLORER ── */
+.explorer{background:linear-gradient(160deg,#111830,#0c1120);border:1px solid var(--border);border-radius:20px;padding:28px;margin:28px 0;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.sel-btn{flex:1;min-width:64px;padding:12px 6px;border:1.5px solid var(--border);background:var(--surface);border-radius:12px;color:var(--muted);font-weight:700;font-size:15px;cursor:pointer;transition:all .18s;text-align:center;font-family:'JetBrains Mono',monospace}
+.sel-btn:hover{border-color:var(--accent);color:var(--text);transform:translateY(-2px)}
+.sel-btn.active{border-color:var(--gold);color:#0c1120;background:var(--gold);box-shadow:0 6px 20px rgba(240,180,41,.3)}
+
+.model-name{font-size:13px;color:var(--muted);margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.model-name b{color:var(--cyan)}
+
+/* param count hero */
+.param-hero{text-align:center;padding:14px 0 22px;border-bottom:1px solid var(--border);margin-bottom:22px}
+.param-num{font-size:clamp(2.4rem,8vw,4rem);font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--gold);line-height:1;letter-spacing:-.02em}
+.param-sub{font-size:14px;color:var(--muted);margin-top:6px}
+
+/* panels */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.panels{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px}
+.panel-label{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.panel-big{font-size:1.7rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.panel-note{font-size:12.5px;color:var(--muted)}
+
+/* fill bar */
+.bar-track{height:12px;background:var(--dim);border-radius:6px;overflow:hidden;margin:8px 0}
+.bar-fill{height:100%;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+/* hardware badge */
+.hw-badge{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:16px 18px;margin-top:16px;transition:border-color .3s}
+.hw-icon{font-size:2.2rem;line-height:1}
+.hw-info b{font-size:1.05rem;color:var(--text);display:block}
+.hw-info span{font-size:12.5px;color:var(--muted)}
+
+/* speed dots */
+.speed-viz{display:flex;gap:3px;margin-top:8px;height:20px;align-items:center}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+/* ── SCALE METAPHOR ── */
+.metaphor{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin:20px 0}
+.metaphor-row{display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
+.metaphor-row:last-child{border-bottom:none}
+.metaphor-icon{font-size:1.8rem;width:44px;text-align:center;flex-shrink:0}
+.metaphor-text{font-size:14px}
+.metaphor-text b{color:var(--gold)}
+
+/* ── HARDWARE CHART ── */
+.hwchart{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin:20px 0}
+.hwrow{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;padding:9px 0}
+@media(max-width:560px){.hwrow{grid-template-columns:1fr}}
+.hwlabel{font-size:13px;font-weight:600}
+.hwlabel span{display:block;font-size:11px;color:var(--muted);font-weight:400;font-family:'JetBrains Mono',monospace}
+.hwmodels{display:flex;gap:5px;flex-wrap:wrap}
+.hwpill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(45,212,160,.12);color:var(--green);border:1px solid rgba(45,212,160,.25)}
+.hwpill.tight{background:rgba(240,180,41,.1);color:var(--gold);border-color:rgba(240,180,41,.25)}
+.hwpill.no{background:rgba(248,113,113,.08);color:var(--red);border-color:rgba(248,113,113,.2)}
+
+/* ── QUANTIZATION ── */
+.quant{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+@media(max-width:560px){.quant{grid-template-columns:1fr}}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+.qname{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;margin-bottom:6px}
+.qsize{font-size:1.6rem;font-weight:800;font-family:'JetBrains Mono',monospace;margin:8px 0}
+.qbar{height:10px;border-radius:5px;background:var(--dim);margin:12px 0;overflow:hidden}
+.qbarf{height:100%;border-radius:5px}
+.qnote{font-size:12px;color:var(--muted)}
+
+/* ── CALLOUT ── */
+.callout{border-left:3px solid var(--accent);background:rgba(79,142,247,.06);border-radius:0 10px 10px 0;padding:16px 20px;margin:22px 0;font-size:14px;color:#8fadd4}
+.callout.gold{border-color:var(--gold);background:rgba(240,180,41,.06);color:#c9ad6a}
+.callout.green{border-color:var(--green);background:rgba(45,212,160,.06);color:#65c9a8}
+.callout strong{color:var(--text)}
+
+/* takeaway table */
+.tk{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px}
+.tk th{background:var(--surface);padding:12px;text-align:left;color:var(--text);border-bottom:2px solid var(--border);font-size:12px}
+.tk td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--muted)}
+.tk tr:hover td{background:rgba(79,142,247,.03)}
+/* ── WEIGHT DEMO ── */
+.wdemo{background:linear-gradient(160deg,#111830,#0c1120);border:1px solid var(--border);border-radius:20px;padding:26px;margin:24px 0}
+.wsents{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+.wsent{padding:9px 15px;border:1.5px solid var(--border);background:var(--surface);border-radius:10px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s}
+.wsent:hover{border-color:var(--accent);color:var(--text)}
+.wsent.active{border-color:var(--gold);color:var(--gold);background:rgba(240,180,41,.08)}
+.wrow{display:grid;grid-template-columns:1.4fr .8fr .8fr 1fr;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.wrow.head{color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)}
+.wcell{text-align:center;font-family:'JetBrains Mono',monospace}
+.wcell.feat{text-align:left;font-family:'Inter',sans-serif;color:var(--text);font-weight:500}
+.wcell.w{color:var(--gold);font-weight:700}
+.wcell.contrib{font-weight:700}
+.wpos{color:var(--green)}.wneg{color:var(--red)}.wzero{color:var(--muted)}
+.wsum{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:16px;background:var(--surface);border-radius:12px}
+.wsum-left{font-size:13px;color:var(--muted)}
+.wsum-val{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:800}
+.wverdict{padding:10px 20px;border-radius:12px;font-weight:800;font-size:1.1rem}
+.wslider-wrap{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.wslider-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.wslider-head b{font-family:'JetBrains Mono',monospace;color:var(--gold)}
+.wdemo input[type=range]{width:100%;height:6px;border-radius:3px;background:var(--dim);outline:none;-webkit-appearance:none}
+.wdemo input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+.wdemo input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+@media(max-width:560px){.wrow{grid-template-columns:1.3fr .7fr .7fr .9fr;font-size:11.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">// Module 02 · Deep Dive</div>
+  <h1>7B, 24B, 405B<br>thực sự nghĩa là gì?</h1>
+  <p class="lead">Con số "B" (billion — tỉ) là số <strong>parameters</strong> của model. Nhưng một tỉ tham số trông ra sao? Nặng bao nhiêu? Máy nào chạy được? Trang này giúp bạn <em>cảm nhận</em> thay vì chỉ ghi nhớ con số.</p>
+  <hr class="hr">
+
+  <!-- ── PARAMETER CONCEPT ── -->
+  <h2>Trước hết: một "parameter" là gì?</h2>
+  <p>Parameter (tham số / trọng số) chỉ là <strong>một con số</strong> mà model đã học được trong lúc train. Nó quyết định tín hiệu đi qua mạng nơ-ron mạnh hay yếu. Một model = hàng tỉ con số như vậy xếp cạnh nhau.</p>
+
+  <div class="concept">
+    <svg viewBox="0 0 300 230" xmlns="http://www.w3.org/2000/svg">
+      <!-- GROUP 1: input(3) -> hidden(4) = 12 lines (blue) -->
+      <g stroke="#4f8ef7" stroke-width="1.4" fill="none" opacity="0.85">
+        <line x1="45" y1="55"  x2="150" y2="35"/>
+        <line x1="45" y1="55"  x2="150" y2="85"/>
+        <line x1="45" y1="55"  x2="150" y2="135"/>
+        <line x1="45" y1="55"  x2="150" y2="185"/>
+        <line x1="45" y1="110" x2="150" y2="35"/>
+        <line x1="45" y1="110" x2="150" y2="85"/>
+        <line x1="45" y1="110" x2="150" y2="135"/>
+        <line x1="45" y1="110" x2="150" y2="185"/>
+        <line x1="45" y1="165" x2="150" y2="35"/>
+        <line x1="45" y1="165" x2="150" y2="85"/>
+        <line x1="45" y1="165" x2="150" y2="135"/>
+        <line x1="45" y1="165" x2="150" y2="185"/>
+      </g>
+      <!-- GROUP 2: hidden(4) -> output(2) = 8 lines (purple) -->
+      <g stroke="#a78bfa" stroke-width="1.4" fill="none" opacity="0.85">
+        <line x1="150" y1="35"  x2="255" y2="85"/>
+        <line x1="150" y1="35"  x2="255" y2="135"/>
+        <line x1="150" y1="85"  x2="255" y2="85"/>
+        <line x1="150" y1="85"  x2="255" y2="135"/>
+        <line x1="150" y1="135" x2="255" y2="85"/>
+        <line x1="150" y1="135" x2="255" y2="135"/>
+        <line x1="150" y1="185" x2="255" y2="85"/>
+        <line x1="150" y1="185" x2="255" y2="135"/>
+      </g>
+      <!-- weight label on one line -->
+      <text x="78" y="38" fill="#f0b429" font-size="11" font-family="monospace">0.83</text>
+      <!-- nodes -->
+      <g>
+        <circle cx="45"  cy="55"  r="12" fill="#131a2b" stroke="#4f8ef7" stroke-width="2.2"/>
+        <circle cx="45"  cy="110" r="12" fill="#131a2b" stroke="#4f8ef7" stroke-width="2.2"/>
+        <circle cx="45"  cy="165" r="12" fill="#131a2b" stroke="#4f8ef7" stroke-width="2.2"/>
+        <circle cx="150" cy="35"  r="12" fill="#131a2b" stroke="#a78bfa" stroke-width="2.2"/>
+        <circle cx="150" cy="85"  r="12" fill="#131a2b" stroke="#a78bfa" stroke-width="2.2"/>
+        <circle cx="150" cy="135" r="12" fill="#131a2b" stroke="#a78bfa" stroke-width="2.2"/>
+        <circle cx="150" cy="185" r="12" fill="#131a2b" stroke="#a78bfa" stroke-width="2.2"/>
+        <circle cx="255" cy="85"  r="12" fill="#131a2b" stroke="#2dd4a0" stroke-width="2.2"/>
+        <circle cx="255" cy="135" r="12" fill="#131a2b" stroke="#2dd4a0" stroke-width="2.2"/>
+      </g>
+      <!-- layer labels -->
+      <text x="45"  y="200" fill="#5f6b8a" font-size="9" font-family="monospace" text-anchor="middle">3 input</text>
+      <text x="150" y="218" fill="#5f6b8a" font-size="9" font-family="monospace" text-anchor="middle">4 giữa</text>
+      <text x="255" y="165" fill="#5f6b8a" font-size="9" font-family="monospace" text-anchor="middle">2 output</text>
+    </svg>
+    <div class="concept-text">
+      <span class="badge">weight = 0.83</span>
+      <p style="margin-bottom:10px">Mỗi <strong>đường nối</strong> có một con số (weight). Mạng này có <strong>đúng 20 đường</strong> — đếm được:</p>
+      <p style="margin-bottom:0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9">
+        <span style="color:#4f8ef7">■</span> Xanh: 3 × 4 = <strong style="color:#4f8ef7">12</strong><br>
+        <span style="color:#a78bfa">■</span> Tím: 4 × 2 = <strong style="color:#a78bfa">8</strong><br>
+        <span style="color:var(--gold)">Tổng = 20 weight</span>
+      </p>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted);margin-top:-4px">Một model <strong>7B có 7.000.000.000 đường nối như thế</strong> — nhiều đến mức không mạng nào vẽ ra nổi. "Học" chính là quá trình tinh chỉnh từng con số trên từng đường.</p>
+
+  <!-- ── CONCRETE WEIGHT EXAMPLE ── -->
+  <h2>Ví dụ cụ thể: con số 0.83 làm gì?</h2>
+  <p>Hãy làm một <strong>neuron siêu nhỏ</strong> có nhiệm vụ đọc một câu và đoán: <strong>người viết đang KHEN hay CHÊ?</strong> Neuron này chỉ nhìn 2 dấu hiệu, mỗi dấu hiệu có một weight (con số) mà nó "đã học".</p>
+
+  <div class="callout gold">
+    <strong>Ý nghĩa của weight:</strong> weight cho biết một dấu hiệu <em>quan trọng cỡ nào</em> và <em>đẩy về hướng nào</em>. Dương = đẩy về "KHEN". Âm = đẩy về "CHÊ". Trị số càng lớn = tác động càng mạnh. Model đã học rằng chữ "tuyệt vời" là tín hiệu khen rất mạnh → weight <b>+0.83</b>; chữ "tệ" là tín hiệu chê → weight <b>−0.41</b>.
+  </div>
+
+  <div class="wdemo">
+    <p style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:4px">Chọn một câu để neuron chấm điểm:</p>
+    <div class="wsents" id="wsents"></div>
+
+    <div class="wrow head">
+      <div class="wcell feat">Dấu hiệu</div>
+      <div class="wcell">Có? (0/1)</div>
+      <div class="wcell">Weight</div>
+      <div class="wcell">Đóng góp</div>
+    </div>
+    <div class="wrow">
+      <div class="wcell feat">Chữ "tuyệt vời"</div>
+      <div class="wcell" id="in-tv">1</div>
+      <div class="wcell w" id="w-tv">+0.83</div>
+      <div class="wcell contrib" id="c-tv">+0.83</div>
+    </div>
+    <div class="wrow">
+      <div class="wcell feat">Chữ "tệ"</div>
+      <div class="wcell" id="in-te">0</div>
+      <div class="wcell w">−0.41</div>
+      <div class="wcell contrib" id="c-te">0.00</div>
+    </div>
+
+    <div class="wsum">
+      <div class="wsum-left">Tổng =<br><span style="font-size:11px" id="sumFormula"></span></div>
+      <div class="wsum-val" id="sumVal"></div>
+      <div class="wverdict" id="verdict"></div>
+    </div>
+
+    <div class="wslider-wrap">
+      <div class="wslider-head">
+        <span>Thử tự tay "dạy lại" neuron — chỉnh weight của "tuyệt vời":</span>
+        <b id="wtvLabel">+0.83</b>
+      </div>
+      <input type="range" id="wtvSlider" min="-100" max="100" value="83" oninput="wUpd()">
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;margin-bottom:0">Kéo về 0 → neuron "quên" rằng tuyệt vời là khen. Kéo sang âm → nó hiểu ngược hoàn toàn. <strong>Đó chính là điều xảy ra khi train: tinh chỉnh con số này cho tới khi neuron đoán đúng.</strong></p>
+    </div>
+  </div>
+
+  <h3>Từ 1 con số → hàng tỉ con số</h3>
+  <p>Neuron trên chỉ có <strong>2 weight</strong> và làm được đúng 1 việc đơn giản. Giờ tưởng tượng:</p>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin:16px 0;font-size:14px;line-height:1.9">
+    <div style="color:var(--muted)">2 weight → phân biệt khen/chê một câu ngắn</div>
+    <div style="color:var(--cyan)">↓ nhân lên hàng triệu lần</div>
+    <div style="color:var(--muted)">hàng nghìn weight → hiểu ngữ pháp, chủ ngữ, thì</div>
+    <div style="color:var(--cyan)">↓ nhân lên tiếp</div>
+    <div style="color:var(--text);font-weight:600">7.000.000.000 weight → hiểu ngữ cảnh, viết code, dịch thuật, suy luận</div>
+  </div>
+  <p>Mỗi weight trong 7 tỉ con số đó cũng chỉ là một số như <code style="color:var(--gold)">0.83</code> — nhưng khi <strong>hàng tỉ con số phối hợp với nhau</strong>, kết quả là khả năng ngôn ngữ mà ta thấy ở ChatGPT hay Claude. "Train" = quá trình dùng dữ liệu để dò ra đúng trị số cho từng con số trong số đó.</p>
+
+  <!-- ── INTERACTIVE EXPLORER ── -->
+  <h2>Chọn kích thước model — xem mọi thứ thay đổi</h2>
+  <p>Bấm vào từng size để thấy nó nặng bao nhiêu, cần máy gì, và chạy nhanh hay chậm:</p>
+
+  <div class="explorer">
+    <div class="selector" id="selector"></div>
+
+    <div class="param-hero">
+      <div class="model-name" id="modelName"></div>
+      <div class="param-num" id="paramNum"></div>
+      <div class="param-sub" id="paramSub"></div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-label">💾 Dung lượng ổ đĩa (bản q4)</div>
+        <div class="panel-big" id="diskBig" style="color:var(--cyan)"></div>
+        <div class="bar-track"><div class="bar-fill" id="diskBar" style="background:var(--cyan)"></div></div>
+        <div class="bar-scale"><span>0</span><span>250 GB</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">🧠 RAM / VRAM cần để chạy</div>
+        <div class="panel-big" id="ramBig" style="color:var(--purple)"></div>
+        <div class="bar-track"><div class="bar-fill" id="ramBar" style="background:var(--purple)"></div></div>
+        <div class="bar-scale"><span>0</span><span>256 GB</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">⚡ Tốc độ sinh chữ</div>
+        <div class="panel-big" id="speedBig" style="color:var(--green)"></div>
+        <div class="speed-viz" id="speedViz"></div>
+        <div class="panel-note" id="speedNote" style="margin-top:8px"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">🎯 Độ "thông minh"</div>
+        <div class="panel-big" id="smartBig" style="color:var(--gold)"></div>
+        <div class="bar-track"><div class="bar-fill" id="smartBar" style="background:var(--gold)"></div></div>
+        <div class="panel-note" id="smartNote" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="hw-badge" id="hwBadge">
+      <div class="hw-icon" id="hwIcon"></div>
+      <div class="hw-info">
+        <b id="hwName"></b>
+        <span id="hwRam"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout gold">
+    <strong>Quy tắc nhớ nhanh:</strong> RAM cần ≈ dung lượng model + chút phần dư cho context. Model 8B (~5GB) chạy ngon trên laptop 16GB. Cứ mỗi lần model to gấp ~4 lần thì bạn cần nhảy lên một hạng phần cứng.
+  </div>
+
+  <!-- ── SCALE METAPHOR ── -->
+  <h2>Một tỉ lớn cỡ nào?</h2>
+  <p>Bộ não người khó hình dung số "tỉ". Vài phép so sánh để cảm nhận:</p>
+
+  <div class="metaphor">
+    <div class="metaphor-row">
+      <div class="metaphor-icon">⏱️</div>
+      <div class="metaphor-text">Nếu đếm <b>1 con số mỗi giây</b>, đếm hết <b>7 tỉ</b> parameters (model 7B) mất <b>~222 năm</b> không ngủ. Với 405B thì mất <b>~12.800 năm</b> — dài hơn cả lịch sử văn minh loài người.</div>
+    </div>
+    <div class="metaphor-row">
+      <div class="metaphor-icon">🧠</div>
+      <div class="metaphor-text">Não người có ~<b>86 tỉ nơ-ron</b> và ~<b>100.000 tỉ</b> khớp thần kinh (synapse). Ngay cả model 405B vẫn nhỏ hơn số synapse trong đầu bạn <b>~250 lần</b>.</div>
+    </div>
+    <div class="metaphor-row">
+      <div class="metaphor-icon">📚</div>
+      <div class="metaphor-text">Một cuốn sách ~100.000 chữ. Model 8B có số parameters bằng số chữ trong <b>~80.000 cuốn sách</b> — cả một thư viện lớn, mỗi "chữ" là một con số đã được tinh chỉnh.</div>
+    </div>
+  </div>
+
+  <!-- ── HARDWARE FIT ── -->
+  <h2>Máy nào chạy được model nào?</h2>
+  <p>Đây là câu hỏi thực tế nhất của một AI Engineer. Bảng dưới cho biết mỗi loại máy chạy thoải mái model nào (bản q4):</p>
+
+  <div class="hwchart">
+    <div class="hwrow">
+      <div class="hwlabel">📱 Máy yếu / mini PC<span>4–6 GB RAM</span></div>
+      <div class="hwmodels"><span class="hwpill">1B</span><span class="hwpill">3B</span><span class="hwpill tight">7B (chậm)</span></div>
+    </div>
+    <div class="hwrow">
+      <div class="hwlabel">💻 Laptop thường<span>16 GB RAM</span></div>
+      <div class="hwmodels"><span class="hwpill">1B</span><span class="hwpill">3B</span><span class="hwpill">8B</span><span class="hwpill tight">14B (chậm)</span></div>
+    </div>
+    <div class="hwrow">
+      <div class="hwlabel">🎮 PC gaming<span>GPU 24 GB (RTX 4090)</span></div>
+      <div class="hwmodels"><span class="hwpill">8B</span><span class="hwpill">14B</span><span class="hwpill">24B</span><span class="hwpill">32B</span><span class="hwpill no">70B ✗</span></div>
+    </div>
+    <div class="hwrow">
+      <div class="hwlabel">🖥️ Máy trạm / 2 GPU<span>48–80 GB</span></div>
+      <div class="hwmodels"><span class="hwpill">32B</span><span class="hwpill">70B</span><span class="hwpill no">405B ✗</span></div>
+    </div>
+    <div class="hwrow">
+      <div class="hwlabel">🏢 Cụm server<span>data center, nhiều trăm GB</span></div>
+      <div class="hwmodels"><span class="hwpill">70B</span><span class="hwpill">100B+</span><span class="hwpill">405B</span></div>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <strong>Vì sao model 7B–8B phổ biến nhất cho dev?</strong> Vì nó là điểm ngọt: đủ thông minh cho phần lớn task, chạy được trên laptop bình thường, tốc độ nhanh, miễn phí. Đó là lý do khóa học này dùng codellama:7b và llama3.1:8b làm mặc định.
+  </div>
+
+  <!-- ── QUANTIZATION ── -->
+  <h2>Quantization — cùng model, ba mức "nén"</h2>
+  <p>Cùng một model 8B, bạn có thể tải bản nặng hay nhẹ tùy mức nén. Nén nhiều = nhẹ hơn, nhanh hơn, nhưng mất một chút chất lượng:</p>
+
+  <div class="quant">
+    <div class="qcard">
+      <div class="qname" style="color:var(--green)">q4</div>
+      <div class="qsize" style="color:var(--green)">~5 GB</div>
+      <div class="qbar"><div class="qbarf" style="width:33%;background:var(--green)"></div></div>
+      <div class="qnote"><strong style="color:var(--text)">4-bit</strong><br>Nhẹ nhất, nhanh nhất.<br>Chất lượng chấp nhận được.<br>Dùng khi máy yếu.</div>
+    </div>
+    <div class="qcard">
+      <div class="qname" style="color:var(--gold)">q8</div>
+      <div class="qsize" style="color:var(--gold)">~9 GB</div>
+      <div class="qbar"><div class="qbarf" style="width:60%;background:var(--gold)"></div></div>
+      <div class="qnote"><strong style="color:var(--text)">8-bit</strong><br>Cân bằng phổ biến nhất.<br>Gần như không mất chất lượng.<br>Lựa chọn an toàn.</div>
+    </div>
+    <div class="qcard">
+      <div class="qname" style="color:var(--cyan)">fp16</div>
+      <div class="qsize" style="color:var(--cyan)">~16 GB</div>
+      <div class="qbar"><div class="qbarf" style="width:100%;background:var(--cyan)"></div></div>
+      <div class="qnote"><strong style="color:var(--text)">16-bit (full)</strong><br>Nặng nhất, chất lượng đầy đủ.<br>Cần GPU mạnh.<br>Dùng khi cần độ chính xác cao.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Đọc tên model:</strong> <code style="font-family:'JetBrains Mono',monospace;color:var(--cyan)">qwen2.5-coder:14b-instruct-q4_K_M</code> → model Qwen, 14 tỉ params, bản instruct (đã tinh chỉnh để nghe lệnh), nén 4-bit. Càng hiểu cách đọc tên, càng chọn đúng model cho máy của mình.
+  </div>
+
+  <!-- ── TAKEAWAY ── -->
+  <h2>Tóm tắt — chọn model là bài toán cân bằng</h2>
+  <table class="tk">
+    <thead>
+      <tr><th>Yếu tố</th><th>Model nhỏ (1–8B)</th><th>Model lớn (32–405B)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Độ thông minh</strong></td><td>Đủ cho task thường</td><td>Reasoning phức tạp, ít sai</td></tr>
+      <tr><td><strong>Tốc độ</strong></td><td>Nhanh (50+ tok/s)</td><td>Chậm (3–15 tok/s)</td></tr>
+      <tr><td><strong>Phần cứng</strong></td><td>Laptop chạy được</td><td>Cần GPU đắt / server</td></tr>
+      <tr><td><strong>Chi phí</strong></td><td>Miễn phí, nhẹ</td><td>Tốn điện, tốn RAM/GPU</td></tr>
+      <tr><td><strong>Hợp cho</strong></td><td>Chatbot, phân loại, tóm tắt</td><td>Phân tích sâu, viết code khó</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout gold">
+    <strong>Bài học cốt lõi:</strong> Không có model "tốt nhất" — chỉ có model <em>phù hợp nhất cho task và phần cứng của bạn</em>. Một model 8B fine-tune đúng có thể thắng model 70B ở nhiệm vụ cụ thể. Nghề AI Engineer là biết chọn đúng size cho đúng việc.
+  </div>
+
+</div>
+
+<script>
+// ── WEIGHT DEMO ──
+const W_TE = -0.41;
+const wSentences = [
+  {t:'"Món này tuyệt vời"', tv:1, te:0},
+  {t:'"Món này tệ"', tv:0, te:1},
+  {t:'"Vừa tuyệt vời vừa hơi tệ"', tv:1, te:1},
+  {t:'"Món này bình thường"', tv:0, te:0},
+];
+let wActive = 0;
+function wUpd(){
+  const wtv = document.getElementById('wtvSlider').value/100;
+  document.getElementById('wtvLabel').textContent = (wtv>=0?'+':'')+wtv.toFixed(2);
+  document.getElementById('w-tv').textContent = (wtv>=0?'+':'')+wtv.toFixed(2);
+
+  const s = wSentences[wActive];
+  document.getElementById('in-tv').textContent = s.tv;
+  document.getElementById('in-te').textContent = s.te;
+
+  const cTv = s.tv * wtv;
+  const cTe = s.te * W_TE;
+  const fmt = v => (v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2);
+  const cls = v => v>0.001?'wpos':v<-0.001?'wneg':'wzero';
+
+  const eTv = document.getElementById('c-tv');
+  eTv.textContent = fmt(cTv); eTv.className = 'wcell contrib '+cls(cTv);
+  const eTe = document.getElementById('c-te');
+  eTe.textContent = fmt(cTe); eTe.className = 'wcell contrib '+cls(cTe);
+
+  const sum = cTv + cTe;
+  document.getElementById('sumFormula').textContent = fmt(cTv)+' và '+fmt(cTe);
+  const sv = document.getElementById('sumVal');
+  sv.textContent = fmt(sum);
+  sv.className = 'wsum-val '+cls(sum);
+
+  const vd = document.getElementById('verdict');
+  if(sum>0.001){vd.textContent='👍 KHEN';vd.style.background='rgba(45,212,160,.15)';vd.style.color='var(--green)';}
+  else if(sum<-0.001){vd.textContent='👎 CHÊ';vd.style.background='rgba(248,113,113,.15)';vd.style.color='var(--red)';}
+  else{vd.textContent='😐 TRUNG TÍNH';vd.style.background='var(--dim)';vd.style.color='var(--muted)';}
+}
+const wsentBox = document.getElementById('wsents');
+wSentences.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='wsent'+(i===0?' active':''); b.textContent=s.t;
+  b.onclick=()=>{wActive=i;document.querySelectorAll('.wsent').forEach(x=>x.classList.remove('active'));b.classList.add('active');wUpd();};
+  wsentBox.appendChild(b);
+});
+wUpd();
+</script>
+
+<script>
+const models = {
+  '1b':  {label:'1B', params:1,   disk:0.8, ram:2,   speed:95, smart:20, hw:'phone',   ex:'Llama 3.2 1B'},
+  '3b':  {label:'3B', params:3,   disk:2.0, ram:4,   speed:75, smart:35, hw:'phone',   ex:'Llama 3.2 3B'},
+  '8b':  {label:'8B', params:8,   disk:4.9, ram:8,   speed:55, smart:55, hw:'laptop',  ex:'Llama 3.1 8B'},
+  '14b': {label:'14B',params:14,  disk:8.5, ram:12,  speed:38, smart:68, hw:'gpu12',   ex:'Qwen2.5-Coder 14B'},
+  '24b': {label:'24B',params:24,  disk:14,  ram:18,  speed:25, smart:76, hw:'gpu24',   ex:'Mistral Small 24B'},
+  '32b': {label:'32B',params:32,  disk:20,  ram:24,  speed:18, smart:82, hw:'gpu24',   ex:'Qwen2.5-Coder 32B'},
+  '70b': {label:'70B',params:70,  disk:42,  ram:48,  speed:8,  smart:91, hw:'workstation', ex:'Llama 3.1 70B'},
+  '405b':{label:'405B',params:405,disk:230, ram:256, speed:3,  smart:98, hw:'cluster', ex:'Llama 3.1 405B'},
+};
+const hardware = {
+  phone:      {icon:'📱', name:'Điện thoại / máy yếu', ram:'4–6 GB RAM'},
+  laptop:     {icon:'💻', name:'Laptop thường', ram:'16 GB RAM — điểm ngọt cho dev'},
+  gpu12:      {icon:'🎮', name:'PC có GPU tầm trung', ram:'GPU 12 GB VRAM'},
+  gpu24:      {icon:'🎮', name:'PC gaming cao cấp', ram:'GPU 24 GB (RTX 4090)'},
+  workstation:{icon:'🖥️', name:'Máy trạm / nhiều GPU', ram:'48–80 GB VRAM'},
+  cluster:    {icon:'🏢', name:'Cụm server (data center)', ram:'Nhiều trăm GB — không chạy local được'},
+};
+const smartLabel = s => s<40?'Cơ bản':s<65?'Khá':s<85?'Giỏi':'Xuất sắc';
+
+function fmtParams(b){
+  if(b>=1000) return (b/1000).toFixed(1)+' nghìn tỉ';
+  return b+' tỉ';
+}
+
+function render(key){
+  const m = models[key];
+  document.querySelectorAll('.sel-btn').forEach(b=>b.classList.toggle('active', b.dataset.k===key));
+
+  document.getElementById('modelName').innerHTML = 'Ví dụ: <b>'+m.ex+'</b>';
+  document.getElementById('paramNum').textContent = (m.params>=1000? (m.params/1000).toFixed(2)+'e3' : m.params) + 'B';
+  document.getElementById('paramNum').textContent = m.label;
+  document.getElementById('paramSub').textContent = '= '+ (m.params*1e9).toLocaleString('vi-VN') +' parameters ('+fmtParams(m.params)+')';
+
+  // disk
+  document.getElementById('diskBig').textContent = m.disk+' GB';
+  document.getElementById('diskBar').style.width = Math.min(100, m.disk/250*100)+'%';
+
+  // ram
+  document.getElementById('ramBig').textContent = m.ram+' GB';
+  document.getElementById('ramBar').style.width = Math.min(100, m.ram/256*100)+'%';
+
+  // speed
+  document.getElementById('speedBig').textContent = m.speed+' tok/s';
+  const respTime = Math.round(260/m.speed);
+  document.getElementById('speedNote').textContent = 'Câu trả lời ~200 từ mất ~'+respTime+' giây';
+  const sv = document.getElementById('speedViz'); sv.innerHTML='';
+  const dots = Math.max(2, Math.round(m.speed/6));
+  for(let i=0;i<dots;i++){const d=document.createElement('div');d.className='sd';
+    d.style.opacity = 0.3 + (i/dots)*0.7; sv.appendChild(d);}
+
+  // smart
+  document.getElementById('smartBig').textContent = smartLabel(m.smart);
+  document.getElementById('smartBar').style.width = m.smart+'%';
+  document.getElementById('smartNote').textContent = 'Tương đối so với các model khác';
+
+  // hardware
+  const hw = hardware[m.hw];
+  document.getElementById('hwIcon').textContent = hw.icon;
+  document.getElementById('hwName').textContent = hw.name;
+  document.getElementById('hwRam').textContent = hw.ram;
+  const badge = document.getElementById('hwBadge');
+  const col = m.hw==='cluster'?'var(--red)':m.hw==='workstation'?'var(--orange)':m.hw==='laptop'||m.hw==='phone'?'var(--green)':'var(--gold)';
+  badge.style.borderColor = col;
+}
+
+// build selector
+const sel = document.getElementById('selector');
+Object.keys(models).forEach(k=>{
+  const b=document.createElement('button');
+  b.className='sel-btn'; b.dataset.k=k; b.textContent=models[k].label;
+  b.onclick=()=>render(k);
+  sel.appendChild(b);
+});
+render('8b');
+</script>
+</body>
+</html>

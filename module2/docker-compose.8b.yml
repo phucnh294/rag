@@ -1,0 +1,19 @@
+name: ollama
+
+services:
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ollama-8b:latest
+    container_name: ollama-8b
+    env_file:
+      - .env.common
+      - .env.ollama8b
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_8b_data:/root/.ollama
+
+volumes:
+  ollama_8b_data:
