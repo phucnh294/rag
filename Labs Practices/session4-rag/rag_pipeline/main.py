@@ -11,8 +11,12 @@ import logging
 import os
 
 import uvicorn
+from dotenv import load_dotenv
 
-from sql.migrations import run_migrations_martin
+load_dotenv()  # populate os.environ from .env when running locally (no-op under Docker,
+# where env_file already injects vars before this process starts)
+
+from sql.migrations import run_migrations_martin  # noqa: E402 (must follow load_dotenv())
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
