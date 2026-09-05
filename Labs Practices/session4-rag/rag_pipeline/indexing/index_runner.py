@@ -34,6 +34,14 @@ def run_indexing_martin(
     frontmatter_metadata = extract_metadata_martin(frontmatter_block)
     resolved_status = status or frontmatter_metadata.get("status")
     resolved_area = area or frontmatter_metadata.get("area")
+    # title/doc_date/tags/doc_type have no upload-form override (unlike
+    # status/area) — they only ever come from frontmatter, since this
+    # project's frontmatter schema (rag-ai-local/template/) already
+    # defines them and there's no per-upload UI need for them yet.
+    title = frontmatter_metadata.get("title")
+    doc_date = frontmatter_metadata.get("date")
+    tags = frontmatter_metadata.get("tags")
+    doc_type = frontmatter_metadata.get("type")  # frontmatter key is "type", column is doc_type
 
     raw_chunks = chunk_body_martin(body_text)
     chunks = preprocess_chunks_martin(raw_chunks)
@@ -42,7 +50,15 @@ def run_indexing_martin(
     conn = get_connection_martin(config)
     try:
         document_id = store_document_martin(
-            conn, source_path, raw_text, status=resolved_status, area=resolved_area
+            conn,
+            source_path,
+            raw_text,
+            status=resolved_status,
+            area=resolved_area,
+            title=title,
+            doc_date=doc_date,
+            tags=tags,
+            doc_type=doc_type,
         )
         return store_chunks_martin(conn, document_id, chunks, embeddings, config.nomic_model)
     finally:
