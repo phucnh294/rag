@@ -3,9 +3,9 @@ title: "Handoff: Reranking + Metadata Filtering Complete"
 date: 2026-09-02
 type: session-handoff
 area: rag-pipeline-retrieval
-status: implementation-complete
+status: superseded
 session_id: n/a
-next_action: "Consider tagging more topics (status=current + area) as the corpus grows — untagged topics get zero protection from the reranker's decoy-susceptibility until curated. Otherwise, next open items are the carried-forward ones below (Lab2 area/tags UI polish, no automated tests, chat loading indicator, port-8000 collision, .env.pgvector mismatch, Gemini 429 risk)."
+next_action: "Superseded — see rag-ai-local/functionality-docs/09052026/01_handoff-chunking-and-hybrid-search.md"
 supersedes: rag-ai-local/functionality-docs/09022026/02_handoff-reranking-and-ui-toggle.md
 tags: [rag-pipeline, reranking, metadata-filtering, cross-encoder, status, area, handoff]
 keywords: [status=current, area scoping, include_reference, rerank-service, distractor documents]
