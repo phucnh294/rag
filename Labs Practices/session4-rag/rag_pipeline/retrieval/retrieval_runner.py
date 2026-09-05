@@ -20,7 +20,7 @@ from retrieval.step4_similarity_search import similarity_search_martin
 from retrieval.step5_metadata_filter import filter_by_metadata_martin
 from retrieval.step6_reranking import rerank_chunks_martin
 from retrieval.step7_context_assembly import assemble_context_martin
-from retrieval.step8_prompt_building import build_prompt_martin
+from retrieval.step8_prompt_building import SYSTEM_INSTRUCTIONS, build_prompt_martin
 from retrieval.step9_llm_call import call_llm_martin
 from retrieval.step10_response import build_response_martin
 from shared.logger import get_logger_martin
@@ -81,7 +81,16 @@ def run_retrieval_martin(
     context = assemble_context_martin(reranked)
     prompt = build_prompt_martin(context, question)
     answer = call_llm_martin(config, prompt)
-    log_prompt_martin(question, prompt, answer)
+    model_name = config.llama_model if config.chat_provider == "ollama" else config.gemini_model
+    log_prompt_martin(
+        question=question,
+        system_prompt=SYSTEM_INSTRUCTIONS,
+        context=context,
+        full_prompt=prompt,
+        provider=config.chat_provider,
+        model=model_name,
+        answer=answer,
+    )
 
     return build_response_martin(
         answer,
