@@ -39,6 +39,7 @@ services:
     volumes:
       - ./rag_pipeline:/app
       - ./input:/app/input        # đọc tài liệu trực tiếp từ input/
+      - ./prompt logs:/app/prompt_logs   # audit log: question/prompt/answer per request
     ports: ["8000:8000"]
     restart: unless-stopped
     stdin_open: true

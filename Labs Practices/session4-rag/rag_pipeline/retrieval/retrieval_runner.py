@@ -24,6 +24,7 @@ from retrieval.step8_prompt_building import build_prompt_martin
 from retrieval.step9_llm_call import call_llm_martin
 from retrieval.step10_response import build_response_martin
 from shared.logger import get_logger_martin
+from shared.prompt_logger import log_prompt_martin
 
 logger = get_logger_martin(__name__)
 
@@ -80,6 +81,7 @@ def run_retrieval_martin(
     context = assemble_context_martin(reranked)
     prompt = build_prompt_martin(context, question)
     answer = call_llm_martin(config, prompt)
+    log_prompt_martin(question, prompt, answer)
 
     return build_response_martin(
         answer,

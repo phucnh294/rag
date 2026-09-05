@@ -16,6 +16,11 @@ venv/
 logs/
 *.log
 
+# Runtime prompt/response audit log (auto-generated per /chat request) -
+# the manually-written session transcripts in the same folder are NOT
+# matched by this pattern and stay tracked.
+prompt_log_*.md
+
 # Docker
 *.pid
 
